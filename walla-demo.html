@@ -1,5 +1,7 @@
 <title>왈라 문항 편집 데모</title>
-<script src="https://cdn.amplitude.com/script/a9ca0dffe57eca0d030f2c407f2ed92f.js"></script>
+<!-- Amplitude SDK files loaded directly: the key-specific loader script starts Amplitude itself, with autocapture on, whenever init has not run yet -->
+<script src="https://cdn.amplitude.com/libs/analytics-browser-2.42.4-min.js.gz" integrity="sha384-lKBFu+lrE+l3rHaNqttqd3e3ga1kwCKyeO1JiVVq2NlrrkHTdt8SobN3bqqLSKSw" crossorigin="anonymous"></script>
+<script src="https://cdn.amplitude.com/libs/plugin-session-replay-browser-1.32.1-min.js.gz" integrity="sha384-hWmXGSUzyw8M7w4rJJlIFGzPeQ65AgJf1YvcH6h4TZPbl20L+aSsZmLLdaPw+J7m" crossorigin="anonymous"></script>
 <style>
 /* participant code: a start dialog and a small chip, styled on their own so both demos share them */
 .pid-bg{position:fixed;inset:0;z-index:200;background:rgba(20,25,35,.45);display:flex;align-items:center;justify-content:center}
@@ -24,11 +26,17 @@ const ampQueue = [];
 if (!window.amplitude) console.error('[amplitude] loader did not load — no events will be sent');
 function ampStart(){
   if (ampReady || !window.amplitude) return;
-  // replay stays on, but the text in every input field is masked
-  window.amplitude.add(window.sessionReplay.plugin({sampleRate: 1, serverZone: 'US', privacyConfig: {defaultMaskLevel: 'medium'}}));
+  // replay stays on, but the text in every input field is masked. The project's replay settings are always fetched
+  // (replay turns itself off without them); these selectors are added to the project's, so inputs stay masked either way.
+  window.amplitude.add(window.sessionReplay.plugin({sampleRate: 1, serverZone: 'US',
+    privacyConfig: {defaultMaskLevel: 'medium', maskSelector: ['input', 'textarea', 'select', '[contenteditable]']}}));
   window.amplitude.init(AMP_KEY, {
     serverZone: 'US',
-    autocapture: false,   // only the events this demo logs
+    // only the events this demo logs: every autocapture type off, and project remote settings are not fetched to turn them back on
+    autocapture: {attribution: false, pageViews: false, sessions: false, formInteractions: false, fileDownloads: false,
+      elementInteractions: false, frustrationInteractions: false, pageUrlEnrichment: false, webVitals: false, networkTracking: false},
+    fetchRemoteConfig: false,
+    remoteConfig: {fetchRemoteConfig: false},
     minIdLength: 1,       // codes like P01 are shorter than Amplitude's default 5-character minimum
   });
   ampReady = true;
