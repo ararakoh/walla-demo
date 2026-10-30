@@ -1,0 +1,724 @@
+<title>왈라 문항 편집 데모</title>
+<script>
+// UT build: the version stays fixed at ut-v1; sent with every Amplitude event as "version"
+const DEMO_VERSION = 'ut-v1';
+// where events come from: 'test' (team testing build) or 'ut' (the usability-test build); sent with every event as "env"
+const DEMO_ENV = 'ut';
+</script>
+<!-- Amplitude SDK files loaded directly: the key-specific loader script starts Amplitude itself, with autocapture on, whenever init has not run yet -->
+<script src="https://cdn.amplitude.com/libs/analytics-browser-2.42.4-min.js.gz" integrity="sha384-lKBFu+lrE+l3rHaNqttqd3e3ga1kwCKyeO1JiVVq2NlrrkHTdt8SobN3bqqLSKSw" crossorigin="anonymous"></script>
+<script src="https://cdn.amplitude.com/libs/plugin-session-replay-browser-1.32.1-min.js.gz" integrity="sha384-hWmXGSUzyw8M7w4rJJlIFGzPeQ65AgJf1YvcH6h4TZPbl20L+aSsZmLLdaPw+J7m" crossorigin="anonymous"></script>
+<style>
+/* participant code: a start dialog and a small chip, styled on their own so both demos share them */
+.pid-bg{position:fixed;inset:0;z-index:200;background:rgba(20,25,35,.45);display:flex;align-items:center;justify-content:center}
+.pid-box{width:340px;max-width:calc(100vw - 32px);box-sizing:border-box;background:#fff;color:#1f2329;border-radius:16px;padding:24px;box-shadow:0 20px 60px rgba(0,0,0,.25)}
+.pid-box h2{margin:0 0 6px;font-size:18px}
+.pid-box p{margin:0 0 14px;font-size:13px;color:#6b7280;line-height:1.5}
+.pid-box input{display:block;width:100%;box-sizing:border-box;height:42px;border:1px solid #dfe3e8;border-radius:10px;padding:0 12px;font:inherit;font-size:15px;outline:none;text-transform:uppercase}
+.pid-box input:focus{border-color:#2f7cf6}
+.pid-err{min-height:18px;margin:6px 0 4px;font-size:12px;color:#d4533b}
+.pid-box button{width:100%;height:42px;border:0;border-radius:10px;background:#2f7cf6;color:#fff;font:inherit;font-weight:700;font-size:14px;cursor:pointer}
+.pid-chip{position:fixed;left:16px;bottom:20px;z-index:30;height:32px;display:flex;align-items:center;gap:8px;padding:0 5px 0 12px;border:1px solid #dfe3e8;border-radius:16px;background:#fff;color:#4a525d;font-size:12.5px;box-shadow:0 2px 8px rgba(0,0,0,.08)}
+.pid-chip button{height:24px;padding:0 10px;border:0;border-radius:12px;background:#eef1f5;color:#4a525d;font:inherit;font-size:12px;cursor:pointer}
+</style>
+<script>
+/* Amplitude: every logged event is sent with the same name and fields, under the participant code as user ID.
+   Events logged before the code is entered wait in a queue and keep their original time.
+   Amplitude only starts once a real code is in; the code TEST sends nothing. */
+// UT Amplitude project key (browser API key). If it is ever emptied, Amplitude never starts and nothing is sent
+const AMP_KEY = '5d84154822b56a3dec348a97f9c358e8';
+const AMP_TEST = 'TEST';
+let ampPid = null, ampLastReal = null, ampReady = false;
+const ampQueue = [];
+if (!window.amplitude) console.error('[amplitude] loader did not load — no events will be sent');
+function ampStart(){
+  if (ampReady || !window.amplitude) return;
+  // replay stays on, but the text in every input field is masked. The project's replay settings are always fetched
+  // (replay turns itself off without them); these selectors are added to the project's, so inputs stay masked either way.
+  window.amplitude.add(window.sessionReplay.plugin({sampleRate: 1, serverZone: 'US',
+    privacyConfig: {defaultMaskLevel: 'medium', maskSelector: ['input', 'textarea', 'select', '[contenteditable]']}}));
+  window.amplitude.init(AMP_KEY, {
+    serverZone: 'US',
+    // only the events this demo logs: every autocapture type off, and project remote settings are not fetched to turn them back on
+    autocapture: {attribution: false, pageViews: false, sessions: false, formInteractions: false, fileDownloads: false,
+      elementInteractions: false, frustrationInteractions: false, pageUrlEnrichment: false, webVitals: false, networkTracking: false},
+    fetchRemoteConfig: false,
+    remoteConfig: {fetchRemoteConfig: false},
+    minIdLength: 1,       // codes like P01 are shorter than Amplitude's default 5-character minimum
+  });
+  ampReady = true;
+}
+function ampTrack(ev, props){
+  if (!window.amplitude || !AMP_KEY || ampPid === AMP_TEST) return;
+  props = {...props, version: DEMO_VERSION, env: DEMO_ENV};
+  if (!ampPid){ ampQueue.push([ev, props, Date.now()]); return; }
+  window.amplitude.track(ev, props);
+}
+function ampSetParticipant(code){
+  ampPid = code;
+  if (code === AMP_TEST){
+    ampQueue.length = 0;
+    if (ampReady) window.amplitude.setOptOut(true);   // stops events and replay for the rest of this test run
+  } else if (window.amplitude && AMP_KEY){
+    ampStart();
+    window.amplitude.setOptOut(false);
+    if (ampLastReal && ampLastReal !== code) window.amplitude.reset();   // a new participant starts a fresh device and session
+    window.amplitude.setUserId(code);
+    ampLastReal = code;
+    ampQueue.splice(0).forEach(([ev, props, time]) => window.amplitude.track(ev, props, {time}));
+  }
+  let chip = document.querySelector('.pid-chip');
+  if (!chip){
+    chip = document.createElement('div'); chip.className = 'pid-chip';
+    chip.innerHTML = '<span></span><button type="button">변경</button>';
+    chip.querySelector('button').addEventListener('click', () => askParticipant());
+    document.body.appendChild(chip);
+  }
+  chip.querySelector('span').textContent = code === AMP_TEST ? '참여자 TEST · 전송 안 함' : `참여자 ${code}`;
+}
+// asks for the participant code (e.g. P01) before the demo starts; onDone runs once a valid code is in
+function askParticipant(onDone){
+  const bg = document.createElement('div'); bg.className = 'pid-bg';
+  bg.innerHTML = `<form class="pid-box" role="dialog" aria-label="참여자 코드 입력" novalidate>
+    <h2>참여자 코드</h2><p>이번 테스트 참여자의 코드를 입력해주세요. 예: UT01</p>
+    <input name="pid" maxlength="20" autocomplete="off" spellcheck="false" aria-label="참여자 코드" value="${ampPid || ''}">
+    <div class="pid-err" role="alert"></div><button type="submit">시작하기</button></form>`;
+  document.body.appendChild(bg);
+  const form = bg.querySelector('form'), input = form.pid;
+  // keep the demo's own shortcuts out of this dialog
+  ['keydown', 'click', 'input', 'change'].forEach(t => bg.addEventListener(t, e => e.stopPropagation()));
+  form.addEventListener('submit', e => {
+    e.preventDefault();
+    const code = input.value.trim().toUpperCase();
+    if (!/^[A-Z0-9_-]{1,20}$/.test(code)){ form.querySelector('.pid-err').textContent = '영문, 숫자, -, _ 로 20자 안에서 입력해주세요'; input.focus(); return; }
+    bg.remove();
+    ampSetParticipant(code);
+    onDone && onDone();
+  });
+  setTimeout(() => input.focus(), 0);
+}
+</script>
+<style>
+:root{
+  --bg:#f7f8fa; --surface:#fff; --line:#e6e8ec; --line2:#eef0f3; --text:#1f2329; --sub:#6b7280; --muted:#9aa1ab;
+  --primary:#0a6cff; --primary-soft:#eaf2ff; --primary-line:#bcd5ff; --danger:#e5484d; --ok:#16a34a;
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%}
+body{background:var(--bg);color:var(--text);font:14px/1.5 "Pretendard","Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif;overflow:hidden}
+/* desktop-only demo: the app keeps its desktop width and scrolls inside its own container on small screens */
+.app-scroll{height:100%;overflow:auto}
+.app{min-width:1200px;height:100%;display:flex;flex-direction:column}
+.confirm-bg{position:fixed;inset:0;background:rgba(20,25,35,.35);z-index:70;display:flex;align-items:center;justify-content:center}
+.confirm{background:var(--surface);border-radius:14px;padding:22px 22px 18px;width:340px;box-shadow:0 12px 40px rgba(0,0,0,.2)}
+.confirm p{margin:0 0 18px;color:var(--text)}
+.confirm div{display:flex;justify-content:flex-end;gap:8px}
+button{font:inherit;color:inherit;cursor:pointer;border:0;background:none}
+input,textarea,select{font:inherit;color:inherit}
+.muted{color:var(--muted)}
+
+/* top bar */
+.top{height:56px;background:var(--surface);border-bottom:1px solid var(--line);display:flex;align-items:center;padding:0 20px;gap:16px;position:sticky;top:0;z-index:20}
+.logo{font-weight:800;color:var(--primary);font-size:20px;letter-spacing:-2px}
+.crumb{color:var(--sub);font-size:13px}
+.crumb b{color:var(--text);font-weight:500}
+.tabs{margin:0 auto;display:flex;background:#f3f4f6;border-radius:8px;padding:3px}
+.tabs span{padding:4px 12px;border-radius:6px;color:var(--muted);font-size:13px}
+.tabs span.on{background:#fff;color:var(--text);box-shadow:0 1px 2px rgba(0,0,0,.06)}
+.top-actions{display:flex;gap:8px}
+.btn{height:34px;padding:0 14px;border-radius:8px;border:1px solid var(--line);background:#fff;font-size:13px;display:inline-flex;align-items:center;gap:6px}
+.btn:hover{background:#f5f6f8}
+.btn:disabled{opacity:.4;cursor:default;background:#fff}
+.btn.primary{background:var(--primary);color:#fff;border-color:var(--primary)}
+.btn.primary:hover{background:#085ad6}
+
+/* layout */
+.layout{display:grid;grid-template-columns:260px 1fr 300px;gap:16px;padding:16px;flex:1;min-height:0}
+.side,.panel{background:var(--surface);border:1px solid var(--line);border-radius:12px;overflow:auto}
+.main{overflow:auto;position:relative}
+
+/* sidebar */
+.sb-head{display:flex;align-items:center;justify-content:space-between;padding:14px 14px 10px}
+.sb-head span{font-weight:600;font-size:13px}
+.plus{width:28px;height:28px;border-radius:7px;background:#f3f4f6;font-size:18px;line-height:1;color:var(--sub)}
+.plus:hover{background:var(--primary-soft);color:var(--primary)}
+.bulk{margin:0 10px 8px;padding:8px 10px;border-radius:8px;background:#f7f8fa;font-size:12px}
+.bulk-row{display:flex;align-items:center;gap:6px}
+.bulk label{display:flex;align-items:center;gap:6px;cursor:pointer;color:var(--sub)}
+.bulk-actions{display:flex;gap:6px;margin-top:8px}
+.bulk-actions button{flex:1;height:28px;border-radius:6px;font-size:12px;border:1px solid var(--line);background:#fff}
+.bulk-actions .on{background:var(--primary);border-color:var(--primary);color:#fff}
+.bulk-actions button:hover{filter:brightness(.97)}
+.bulk-hint{margin-top:4px;color:var(--muted);font-size:11.5px}
+.sb-list{list-style:none;margin:0;padding:0 6px 10px}
+.sb-item{display:flex;align-items:center;gap:8px;padding:7px 8px;border-radius:8px;cursor:pointer;position:relative}
+.sb-item:hover{background:#f5f6f8}
+.sb-item.active{background:var(--primary-soft)}
+.sb-item input{margin:0;cursor:pointer}
+.badge{display:inline-flex;align-items:center;gap:4px;height:22px;padding:0 7px;border-radius:6px;background:#eef1f6;font-size:12px;color:#3b4a66;flex:none}
+.sb-title{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:13px}
+.sb-title.empty{color:var(--muted);font-style:italic}
+.req-tag{font-size:11px;color:var(--danger);background:#fdecec;border-radius:4px;padding:0 5px;flex:none}
+.sb-item .del{visibility:hidden;width:20px;height:20px;border-radius:4px;color:var(--muted);flex:none}
+.sb-item:hover .del{visibility:visible}
+.sb-item .del:hover{background:#fdecec;color:var(--danger)}
+.sb-end{border-top:1px solid var(--line2);margin-top:8px;padding:14px;font-weight:600;font-size:13px;color:var(--muted)}
+
+/* picker (Walla-style list) */
+.picker{background:#fff;border:1px solid var(--line);border-radius:14px;padding:18px 20px 16px;box-shadow:0 8px 30px rgba(20,30,50,.10)}
+.pk-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+.pk-search{width:240px;height:34px;border-radius:8px;border:0;background:#f3f4f6;padding:0 12px 0 32px;outline:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%239aa1ab' stroke-width='2.4'%3E%3Ccircle cx='11' cy='11' r='7'/%3E%3Cpath d='m20 20-3.5-3.5'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:11px center}
+.pk-tab{font-size:12px;color:var(--sub);background:#f3f4f6;border-radius:6px;padding:4px 10px}
+.pk-cols{display:grid;grid-template-columns:repeat(5,1fr);gap:8px}
+.pk-cat{font-size:12px;color:var(--sub);margin:4px 0 6px 6px}
+.pick{display:flex;align-items:center;gap:8px;width:100%;padding:7px 6px;border-radius:8px;text-align:left;font-size:13px}
+.pick:hover{background:#f3f6fb}
+.ico{width:22px;height:22px;border-radius:6px;display:inline-flex;align-items:center;justify-content:center;font-size:12px;flex:none}
+.c-choice{background:#e8eefc;color:#2f4fb5}.c-text{background:#e6f0ff;color:#2463c9}.c-data{background:#e5f6ea;color:#1f8a3e}.c-contact{background:#fdecec;color:#d23b3b}.c-date{background:#fbe8f3;color:#c0388a}
+.first-wrap{max-width:900px;margin:40px auto}
+.first-msg{text-align:center;color:var(--sub);margin-bottom:14px}
+.pk-layer .backdrop{position:fixed;inset:0;z-index:40}
+.pk-layer .picker{position:fixed;z-index:41;top:110px;left:50%;transform:translateX(-50%);width:820px}
+
+/* card */
+.canvas{max-width:780px;margin:28px auto 60px}
+.card{background:#fff;border:1px solid var(--line);border-radius:14px 14px 0 0;padding:22px 26px 20px}
+.card-head{display:flex;align-items:center;gap:8px;margin-bottom:10px}
+.qno{font-weight:700;color:var(--primary);font-size:13px}
+.type-btn{display:inline-flex;align-items:center;gap:6px;height:28px;padding:0 10px;border-radius:7px;background:#f3f4f6;font-size:12.5px;color:#3b4a66}
+.type-btn:hover{background:#e9ecf1}
+.spacer{flex:1}
+.title-row{display:flex;align-items:flex-start;gap:4px}
+.q-title{flex:1;border:0;outline:none;font-size:20px;font-weight:600;padding:6px 0;border-bottom:2px solid transparent}
+.q-title:focus{border-bottom-color:var(--primary-line)}
+.q-title::placeholder{color:#b8bec7;font-weight:500}
+.star{color:var(--danger);font-size:20px;font-weight:700;padding-top:4px}
+.opts{margin-top:14px;display:flex;flex-direction:column;gap:8px}
+.opt-row{display:flex;align-items:center;gap:10px}
+.mark{width:18px;text-align:center;color:#b8bec7;flex:none;font-size:13px}
+.opt-row input{flex:1;height:40px;border:1px solid transparent;background:#f7f8fa;border-radius:8px;padding:0 12px;outline:none}
+.opt-row input:focus{border-color:var(--primary-line);background:#fff}
+.opt-row .x{width:26px;height:26px;border-radius:6px;color:var(--muted);flex:none}
+.opt-row .x:hover{background:#f3f4f6;color:var(--danger)}
+.other{flex:1;height:40px;border-radius:8px;border:1px dashed var(--line);display:flex;align-items:center;padding:0 12px;color:var(--sub)}
+.card-actions{display:flex;gap:16px;margin-top:12px}
+.link-btn{color:var(--primary);font-size:13px;font-weight:500;display:inline-flex;align-items:center;gap:5px;padding:4px 2px}
+.link-btn:hover{text-decoration:underline}
+.fake{margin-top:14px;height:42px;border-radius:8px;background:#f7f8fa;color:#b8bec7;display:flex;align-items:center;padding:0 12px}
+.fake.tall{height:96px;align-items:flex-start;padding-top:10px}
+.fake.drop{height:90px;justify-content:center;border:1.5px dashed var(--line);background:#fafbfc}
+.scale{margin-top:16px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.scale .dot{width:34px;height:34px;border-radius:50%;border:1px solid var(--line);display:flex;align-items:center;justify-content:center;color:var(--sub);font-size:13px}
+.scale-labels{display:flex;gap:10px;margin-top:12px}
+.scale-labels input{flex:1;height:36px;border-radius:8px;border:1px solid var(--line);padding:0 10px;outline:none;font-size:13px}
+.scale-labels input:focus{border-color:var(--primary-line)}
+
+/* options bar under the card */
+.optbar{background:#f4f8ff;border:1px solid var(--primary-line);border-top:1px dashed var(--primary-line);border-radius:0 0 14px 14px;padding:12px 26px 14px}
+.optbar-label{font-size:12px;font-weight:600;color:var(--primary);margin-bottom:8px;display:flex;align-items:center;gap:6px}
+.opt-items{display:flex;flex-wrap:wrap;align-items:center;gap:10px 14px}
+.tog{display:inline-flex;align-items:center;gap:8px;height:34px;padding:0 12px 0 8px;border-radius:17px;background:#fff;border:1px solid var(--line);cursor:pointer;font-size:13px;user-select:none}
+.tog input{display:none}
+.sw{width:30px;height:18px;border-radius:9px;background:#d5d9e0;position:relative;transition:.15s;flex:none}
+.sw::after{content:"";position:absolute;top:2px;left:2px;width:14px;height:14px;border-radius:50%;background:#fff;transition:.15s;box-shadow:0 1px 2px rgba(0,0,0,.2)}
+.tog.on{border-color:var(--primary-line);background:#fff}
+.tog.on .sw{background:var(--primary)}
+.tog.on .sw::after{left:14px}
+.ctrl{display:inline-flex;align-items:center;gap:8px;height:34px;padding:0 6px 0 12px;border-radius:17px;background:#fff;border:1px solid var(--line);font-size:13px}
+.ctrl-label{color:var(--sub)}
+.seg{display:inline-flex;background:#f1f3f6;border-radius:7px;padding:2px}
+.seg button{height:24px;padding:0 9px;border-radius:5px;font-size:12.5px;color:var(--sub)}
+.seg button.on{background:#fff;color:var(--primary);font-weight:600;box-shadow:0 1px 2px rgba(0,0,0,.08)}
+.stepper{display:inline-flex;align-items:center;border:1px solid var(--line);border-radius:7px;height:26px;overflow:hidden}
+.stepper button{width:24px;height:100%;color:var(--sub)}
+.stepper button:hover{background:#f3f4f6}
+.stepper input{width:40px;height:100%;border:0;border-left:1px solid var(--line);border-right:1px solid var(--line);text-align:center;outline:none;-moz-appearance:textfield}
+.stepper input::-webkit-inner-spin-button{-webkit-appearance:none}
+.ctrl select{height:26px;border-radius:6px;border:1px solid var(--line);background:#fff;padding:0 4px}
+.opt-hint{width:100%;font-size:12px;color:var(--sub)}
+.opt-hint.warn{color:#b45309}
+.add-below{display:block;margin:18px auto 0;height:36px;padding:0 16px;border-radius:18px;background:#fff;border:1px dashed var(--primary-line);color:var(--primary);font-size:13px;font-weight:500}
+.add-below:hover{background:var(--primary-soft)}
+
+/* right panel */
+.panel-h{padding:16px 16px 6px;font-weight:600;font-size:13px;display:flex;justify-content:space-between}
+.panel-note{margin:6px 12px 6px;padding:9px 11px;border-radius:8px;background:#f4f8ff;color:#3b4a66;font-size:12px}
+.sec{padding:12px 16px;border-top:1px solid var(--line2)}
+.sec:first-of-type{border-top:0}
+.sec-t{font-size:12.5px;font-weight:600;margin-bottom:8px}
+.sec textarea,.sec input,.sec select{width:100%;border:1px solid var(--line);border-radius:8px;padding:8px 10px;outline:none;font-size:13px;background:#fff}
+.sec textarea{min-height:70px;resize:vertical}
+.sec textarea:focus,.sec input:focus{border-color:var(--primary-line)}
+.field{margin-bottom:10px}
+.field label{display:block;font-size:12px;color:var(--sub);margin-bottom:4px}
+.panel-empty{padding:30px 18px;color:var(--muted);font-size:13px;text-align:center}
+
+/* log */
+.log{position:fixed;right:20px;bottom:72px;z-index:50;width:640px;max-height:70vh;background:#fff;border:1px solid var(--line);border-radius:14px;box-shadow:0 12px 40px rgba(0,0,0,.18);display:flex;flex-direction:column}
+.log-h{display:flex;align-items:center;gap:8px;padding:12px 14px;border-bottom:1px solid var(--line2)}
+.log-h b{flex:1}
+.log-sc{display:flex;gap:6px;padding:10px 14px;border-bottom:1px solid var(--line2);flex-wrap:wrap}
+.sc{font-size:12px;padding:3px 9px;border-radius:12px;background:#f3f4f6;color:var(--sub)}
+.sc.done{background:#e6f6ec;color:var(--ok)}
+.log-body{overflow:auto}
+.log table{width:100%;border-collapse:collapse;font-size:12px}
+.log th{position:sticky;top:0;background:#fafbfc;text-align:left;font-weight:600;color:var(--sub);padding:7px 10px;border-bottom:1px solid var(--line)}
+.log td{padding:6px 10px;border-bottom:1px solid var(--line2);vertical-align:top}
+.log td.ev{font-family:ui-monospace,Consolas,monospace;color:#2463c9;white-space:nowrap}
+.log td.num{white-space:nowrap;color:var(--sub)}
+.log tr.complete td{background:#f0faf3}
+
+.toast{position:fixed;left:50%;bottom:30px;transform:translateX(-50%);background:#1f2329;color:#fff;padding:9px 16px;border-radius:8px;font-size:13px;z-index:60;opacity:0;transition:opacity .2s;pointer-events:none}
+.toast.show{opacity:1}
+</style>
+<div class="app-scroll"><div class="app">
+<header class="top">
+  <span class="logo">ꝏ</span>
+  <span class="crumb">테스트 › <b>웨비나 만족도 설문</b></span>
+  <div class="tabs"><span class="on">만들기</span><span>연동하기</span><span>공유하기</span><span>결과보기</span></div>
+  <div class="top-actions">
+    <button class="btn" id="undoBtn" data-act="undo" title="Ctrl+Z">↶ 되돌리기</button>
+    <button class="btn primary" data-act="reset">처음부터 다시</button>
+  </div>
+</header>
+<div class="layout">
+  <aside class="side" id="side"></aside>
+  <main class="main" id="main"></main>
+  <aside class="panel" id="panel"></aside>
+</div>
+</div></div>
+<div class="pk-layer" id="pkLayer"></div>
+<div id="confirmLayer"></div>
+<div id="logLayer"></div>
+<div class="toast" id="toast"></div>
+
+<script>
+const TYPES = {
+  single:  {label:'객관식',           icon:'◉', cat:'choice'},
+  multi:   {label:'객관식 (다중선택)', icon:'☑', cat:'choice'},
+  dropdown:{label:'드롭다운',          icon:'▾', cat:'choice'},
+  scale:   {label:'선형배율',          icon:'⋯', cat:'choice'},
+  rank:    {label:'순위 선택',         icon:'≡', cat:'choice'},
+  short:   {label:'단답형',            icon:'—', cat:'text'},
+  long:    {label:'장문형',            icon:'¶', cat:'text'},
+  file:    {label:'파일 업로드',       icon:'⇪', cat:'data'},
+  phone:   {label:'전화번호',          icon:'☎', cat:'contact'},
+  email:   {label:'이메일',            icon:'✉', cat:'contact'},
+  date:    {label:'날짜',              icon:'▦', cat:'date'},
+};
+const CATS = [['Choices',['single','multi','dropdown','scale','rank']],['Text',['short','long']],['Data',['file']],['Contacts',['phone','email']],['Date Time',['date']]];
+const CHOICE = ['single','multi','dropdown','rank'];
+const OPTN = {required:'필수 입력',shuffle:'선택지 순서 섞기',selMode:'선택 개수',selCount:'선택 개수(숫자)',rankMode:'순위 개수',rankCount:'순위 개수(숫자)',
+  maxLenOn:'글자 수 제한',maxLen:'최대 글자 수',formatCheck:'형식 검사',scaleMin:'시작 값',scaleMax:'끝 값',withTime:'시간도 받기',maxFiles:'최대 파일 수',
+  validation:'응답 검증',hasOther:"'기타' 옵션"};
+const VALN = {none:'제한 없음',exact:'정확히',min:'최소',max:'최대',all:'전체 순위',top:'상위 N개',true:'켬',false:'끔',number:'숫자만',letters:'문자만'};
+const FIELDN = {title:'제목',scaleMinLabel:'왼쪽 라벨',scaleMaxLabel:'오른쪽 라벨',desc:'설명',placeholder:'안내 문구',domain:'허용 도메인'};
+const LIMITS = {selCount:[1,20],rankCount:[1,20],maxLen:[1,5000],maxFiles:[1,10]};
+
+let S, undoStack, checked, picker, completed, inlineLogged, logOpen = false;
+let LOG = [], t0 = null, seq = 0;
+let focusSnap = null, focusVal = null;
+
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+const cur = () => S.qs.find(q => q.id === S.cur);
+const qn = q => 'Q' + (S.qs.indexOf(q) + 1);
+const ico = t => `<span class="ico c-${TYPES[t].cat}">${TYPES[t].icon}</span>`;
+
+function newQuestion(type){
+  return {id:'q' + (++seq) + Date.now().toString(36), type, title:'', desc:'', options: CHOICE.includes(type) ? [''] : [],
+    hasOther:false, required:false, shuffle:false, selMode:'none', selCount:3, rankMode:'all', rankCount:3,
+    maxLenOn:false, maxLen: type === 'long' ? 1000 : 100, formatCheck:true, scaleMin:1, scaleMax:5,
+    scaleMinLabel:'', scaleMaxLabel:'', withTime:false, maxFiles:1, validation:'none', placeholder:'', domain:''};
+}
+
+/* ---------- logging ---------- */
+function log(ev, detail = ''){
+  const now = new Date();
+  if (ev === 'task_start') t0 = now;
+  const el = t0 ? (now - t0) / 1000 : 0;
+  LOG.push({ev, detail, t: now, el});
+  ampTrack(ev, {detail, elapsed_sec: Math.round(el * 10) / 10, demo: 'editor'});
+  if (logOpen) renderLog();
+}
+const pad = (n, l = 2) => String(n).padStart(l, '0');
+const fmt = d => `${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}.${pad(d.getMilliseconds(), 3)}`;
+
+function norm(s){ return String(s).replace(/[\s,]/g,'').replace(/[-–—～〜]/g,'~').toLowerCase(); }
+function scenarios(){
+  const need = ['50명미만','50~299명','300~999명','1000명이상'];
+  const q1 = S.qs.find(q => q.type === 'dropdown' && norm(q.title).includes('회사규모') && need.every(n => q.options.some(o => norm(o) === n)));
+  const q2 = S.qs.find(q => q.type === 'email' && q.title.includes('이메일'));
+  const q3 = S.qs.find(q => q.type === 'multi' && q.title.includes('주제') && q.selMode === 'exact' && q.selCount === 3);
+  const q4 = S.qs.find(q => q !== q1 && q !== q2 && q !== q3 && q.required);
+  return [!!q1, !!q2, !!q3, !!q4];
+}
+function check(){
+  const r = scenarios();
+  if (!completed && r.every(Boolean)){
+    completed = true;
+    log('task_complete', `시나리오 1~4 완료 · 소요 ${((new Date() - t0) / 1000).toFixed(1)}초`);
+  }
+  if (logOpen) renderLog();
+}
+
+/* ---------- state changes ---------- */
+function push(){ undoStack.push(JSON.stringify(S)); if (undoStack.length > 200) undoStack.shift(); }
+function undo(){
+  if (!undoStack.length) return;
+  S = JSON.parse(undoStack.pop());
+  checked = new Set([...checked].filter(id => S.qs.some(q => q.id === id)));
+  picker = {open:false};
+  log('undo', `${S.qs.length}개 문항 상태로 되돌림`);
+  render(); check();
+}
+function start(){
+  S = {qs:[], cur:null}; undoStack = []; checked = new Set(); picker = {open:false};
+  completed = false; inlineLogged = false;
+  log('task_start');
+  render();
+}
+function reset(){
+  $('#confirmLayer').innerHTML = `<div class="confirm-bg"><div class="confirm" role="dialog">
+    <p>처음부터 다시 시작할까요?<br>만든 문항이 모두 지워져요.</p>
+    <div><button class="btn" data-act="resetNo">취소</button><button class="btn primary" data-act="resetYes">처음부터 다시</button></div></div></div>`;
+}
+function resetConfirmed(){
+  $('#confirmLayer').innerHTML = '';
+  log('reset', `문항 ${S.qs.length}개 삭제`);
+  start();
+}
+
+function setOpt(key, val){
+  const q = cur(); if (!q) return;
+  if (LIMITS[key]){ const [a, b] = LIMITS[key]; val = Math.min(b, Math.max(a, parseInt(val, 10) || a)); }
+  if (q[key] === val) return;
+  push(); q[key] = val;
+  let v = VALN[val] ?? val;
+  if (key === 'selMode' && val !== 'none') v += ` ${q.selCount}개`;
+  if (key === 'rankMode' && val === 'top') v = `상위 ${q.rankCount}개`;
+  log('option_set', `${qn(q)} · ${OPTN[key]} = ${v}`);
+  render(); check();
+}
+
+function bulkRequired(on){
+  const ids = [...checked]; if (!ids.length) return;
+  push();
+  const names = [];
+  S.qs.forEach((q, i) => { if (checked.has(q.id)){ q.required = on; names.push('Q' + (i + 1)); } });
+  log('bulk_required', `필수 입력 = ${on ? '켬' : '끔'} · ${names.join(', ')} (${names.length}개)`);
+  toast(`${names.length}개 문항을 ${on ? '필수로 설정했어요' : '필수에서 해제했어요'}`);
+  checked.clear();
+  render(); check();
+}
+
+function openPicker(mode, src){
+  picker = {open:true, mode};
+  log('type_opened', src);
+  renderPicker();
+  setTimeout(() => $('#pkLayer .pk-search')?.focus(), 0);
+}
+// closing the type list without picking a type
+function closePicker(how){
+  log('type_panel_closed', `${picker.mode === 'change' ? '유형 바꾸기' : '문항 추가'} · ${how}`);
+  picker = {open:false}; renderPicker();
+}
+function pickType(type){
+  const mode = picker.open ? picker.mode : 'first';
+  picker = {open:false};
+  push();
+  if (mode === 'change'){
+    const q = cur();
+    const from = q.type; q.type = type;
+    if (CHOICE.includes(type) && !q.options.length) q.options = [''];
+    if (type === 'long' && from !== 'long') q.maxLen = 1000;
+    log('type_selected', `${qn(q)} · ${TYPES[from].label} → ${TYPES[type].label}`);
+  } else {
+    const q = newQuestion(type);
+    S.qs.push(q); S.cur = q.id;
+    log('type_selected', `${TYPES[type].label} (${mode === 'first' ? '첫 문항' : '문항 추가'})`);
+    log('question_added', `${qn(q)} · ${TYPES[type].label}`);
+  }
+  render(); check();
+  setTimeout(() => $('.q-title')?.focus(), 0);
+}
+
+/* ---------- render ---------- */
+function render(){ renderSide(); renderMain(); renderPanel(); renderPicker(); $('#undoBtn').disabled = !undoStack.length; }
+
+function renderSide(){
+  const n = S.qs.length, k = checked.size;
+  let bulk = '';
+  if (n){
+    bulk = `<div class="bulk">
+      <div class="bulk-row"><label><input type="checkbox" id="chkAll" ${k && k === n ? 'checked' : ''}> 전체 선택</label>
+      <span class="spacer"></span>${k ? `<b style="font-size:12px">${k}개 선택</b>` : ''}</div>
+      ${k ? `<div class="bulk-actions"><button class="on" data-act="bulkOn">필수로 설정</button><button data-act="bulkOff">필수 해제</button></div>`
+          : `<div class="bulk-hint">체크해서 여러 문항을 한 번에 필수로 설정할 수 있어요</div>`}
+    </div>`;
+  }
+  $('#side').innerHTML = `<div class="sb-head"><span>설문 필드</span><button class="plus" data-act="openAdd" data-src="사이드바 +" title="문항 추가">+</button></div>
+    ${bulk}
+    <ul class="sb-list">${S.qs.map((q, i) => `
+      <li class="sb-item ${q.id === S.cur ? 'active' : ''}" data-id="${q.id}">
+        <input type="checkbox" class="chk" data-id="${q.id}" ${checked.has(q.id) ? 'checked' : ''}>
+        <span class="badge">${TYPES[q.type].icon} ${i + 1}</span>
+        <span class="sb-title ${q.title ? '' : 'empty'}">${esc(q.title || '제목 없음')}</span>
+        ${q.required ? '<span class="req-tag">필수</span>' : ''}
+        <button class="del" data-act="del" data-id="${q.id}" title="문항 삭제">×</button>
+      </li>`).join('')}</ul>
+    <div class="sb-end">엔딩 필드</div>`;
+}
+
+function pickerInner(){
+  return `<div class="pk-top"><input class="pk-search" placeholder="필드 검색"><span class="pk-tab">기본</span></div>
+    <div class="pk-cols">${CATS.map(([name, ts]) => `<div><div class="pk-cat">${name}</div>
+      ${ts.map(t => `<button class="pick" data-type="${t}" data-name="${TYPES[t].label}">${ico(t)}${TYPES[t].label}</button>`).join('')}</div>`).join('')}</div>`;
+}
+function renderPicker(){
+  $('#pkLayer').innerHTML = picker.open ? `<div class="backdrop" data-act="closePicker"></div><div class="picker">${pickerInner()}</div>` : '';
+}
+
+function renderMain(){
+  const m = $('#main');
+  if (!S.qs.length){
+    m.innerHTML = `<div class="first-wrap"><div class="first-msg">첫 문항의 유형을 골라주세요</div><div class="picker">${pickerInner()}</div></div>`;
+    if (!inlineLogged){ inlineLogged = true; log('type_opened', '첫 문항'); }
+    return;
+  }
+  inlineLogged = false;
+  const q = cur(), i = S.qs.indexOf(q);
+  m.innerHTML = `<div class="canvas">${cardHTML(q, i)}${optbarHTML(q)}
+    <button class="add-below" data-act="openAdd" data-src="카드 아래 + 문항 추가">+ 문항 추가</button></div>`;
+}
+
+function cardHTML(q, i){
+  const t = q.type;
+  let body = '';
+  if (CHOICE.includes(t)){
+    const mark = k => t === 'single' ? '○' : t === 'multi' ? '☐' : (k + 1) + '.';
+    body = `<div class="opts">${q.options.map((o, k) => `
+      <div class="opt-row"><span class="mark">${mark(k)}</span>
+        <input data-f="opt" data-i="${k}" value="${esc(o)}" placeholder="옵션을 입력해주세요">
+        <button class="x" data-act="delOpt" data-i="${k}" title="옵션 삭제">×</button></div>`).join('')}
+      ${q.hasOther ? `<div class="opt-row"><span class="mark">${mark(q.options.length)}</span><div class="other">기타 (응답자가 직접 입력)</div>
+        <button class="x" data-act="delOther" title="삭제">×</button></div>` : ''}
+    </div>
+    <div class="card-actions"><button class="link-btn" data-act="addOpt">⊕ 옵션 추가</button>
+      ${(t === 'single' || t === 'multi') && !q.hasOther ? `<button class="link-btn" data-act="addOther">Tт '기타' 옵션 추가</button>` : ''}</div>`;
+  } else if (t === 'scale'){
+    const dots = []; for (let v = q.scaleMin; v <= q.scaleMax; v++) dots.push(`<span class="dot">${v}</span>`);
+    body = `<div class="scale">${dots.join('')}</div>
+      <div class="scale-labels"><input data-f="scaleMinLabel" value="${esc(q.scaleMinLabel)}" placeholder="${q.scaleMin} 라벨 (예: 전혀 아니다)">
+      <input data-f="scaleMaxLabel" value="${esc(q.scaleMaxLabel)}" placeholder="${q.scaleMax} 라벨 (예: 매우 그렇다)"></div>`;
+  } else {
+    const fake = {short:['', '단답형 텍스트'], long:['tall', '장문형 텍스트'], email:['', 'example@email.com'],
+      phone:['', '010-0000-0000'], date:['', 'YYYY. MM. DD' + (q.withTime ? '  ·  --:--' : '')], file:['drop', '파일을 끌어오거나 클릭해서 업로드']}[t];
+    body = `<div class="fake ${fake[0]}">${esc(q.placeholder || fake[1])}</div>`;
+  }
+  return `<div class="card">
+    <div class="card-head"><span class="qno">Q${i + 1}</span>
+      <button class="type-btn" data-act="changeType" title="유형 바꾸기">${TYPES[t].icon} ${TYPES[t].label} ▾</button></div>
+    <div class="title-row"><input class="q-title" data-f="title" value="${esc(q.title)}" placeholder="질문을 입력하세요...">${q.required ? '<span class="star">*</span>' : ''}</div>
+    ${body}</div>`;
+}
+
+const tog = (q, key, label) => `<label class="tog ${q[key] ? 'on' : ''}"><input type="checkbox" data-o="${key}" ${q[key] ? 'checked' : ''}><span class="sw"></span>${label}</label>`;
+const seg = (q, key, pairs) => `<div class="seg">${pairs.map(([v, l]) => `<button class="${q[key] === v ? 'on' : ''}" data-act="set" data-o="${key}" data-v="${v}">${l}</button>`).join('')}</div>`;
+const step = (q, key) => `<div class="stepper"><button data-act="dec" data-o="${key}">−</button><input type="number" data-o="${key}" value="${q[key]}"><button data-act="inc" data-o="${key}">+</button></div>`;
+
+function optbarHTML(q){
+  const t = q.type, items = [tog(q, 'required', '필수 입력')];
+  let hint = '';
+  if (t === 'multi'){
+    items.push(`<div class="ctrl"><span class="ctrl-label">선택 개수</span>${seg(q, 'selMode', [['none','제한 없음'],['exact','정확히'],['min','최소'],['max','최대']])}
+      ${q.selMode !== 'none' ? step(q, 'selCount') + '<span>개</span>' : ''}</div>`);
+    if (q.selMode !== 'none'){
+      const n = q.selCount, filled = q.options.filter(o => o.trim()).length + (q.hasOther ? 1 : 0);
+      hint = `<div class="opt-hint">응답자는 ${{exact:`정확히 ${n}개를`, min:`최소 ${n}개 이상`, max:`최대 ${n}개까지`}[q.selMode]} 골라야 해요.</div>`;
+      if (q.selMode !== 'max' && filled < n) hint += `<div class="opt-hint warn">선택지가 ${n}개 이상 있어야 해요 (지금 ${filled}개)</div>`;
+    }
+  }
+  if (t === 'rank') items.push(`<div class="ctrl"><span class="ctrl-label">순위 개수</span>${seg(q, 'rankMode', [['all','전체 순위'],['top','상위 N개만']])}
+      ${q.rankMode === 'top' ? step(q, 'rankCount') + '<span>개</span>' : ''}</div>`);
+  if (CHOICE.includes(t)) items.push(tog(q, 'shuffle', '선택지 순서 섞기'));
+  if (t === 'short' || t === 'long'){
+    items.push(tog(q, 'maxLenOn', '글자 수 제한'));
+    if (q.maxLenOn) items.push(`<div class="ctrl"><span class="ctrl-label">최대</span>${step(q, 'maxLen')}<span>자</span></div>`);
+  }
+  if (t === 'email') items.push(tog(q, 'formatCheck', '이메일 형식만 받기'));
+  if (t === 'phone') items.push(tog(q, 'formatCheck', '전화번호 형식만 받기'));
+  if (t === 'scale'){
+    const opts = (arr, v) => arr.map(x => `<option value="${x}" ${x === v ? 'selected' : ''}>${x}</option>`).join('');
+    items.push(`<div class="ctrl" style="padding-right:12px"><span class="ctrl-label">범위</span>
+      <select data-o="scaleMin">${opts([0, 1], q.scaleMin)}</select><span>~</span><select data-o="scaleMax">${opts([3,4,5,6,7,8,9,10], q.scaleMax)}</select></div>`);
+  }
+  if (t === 'date') items.push(tog(q, 'withTime', '시간도 함께 받기'));
+  if (t === 'file') items.push(`<div class="ctrl"><span class="ctrl-label">최대 파일 수</span>${step(q, 'maxFiles')}<span>개</span></div>`);
+  return `<div class="optbar"><div class="optbar-label">⚙ 이 문항 옵션 · ${TYPES[t].label}</div><div class="opt-items">${items.join('')}${hint}</div></div>`;
+}
+
+function renderPanel(){
+  const q = cur(), p = $('#panel');
+  if (!q){ p.innerHTML = `<div class="panel-h">고급 설정</div><div class="panel-empty">문항을 만들면 고급 설정이 여기에 표시돼요.</div>`; return; }
+  const t = q.type;
+  const ph = `<div class="field"><label>입력칸 안내 문구</label><input data-f="placeholder" value="${esc(q.placeholder)}" placeholder="응답 입력칸에 보일 문구"></div>`;
+  let v;
+  if (t === 'short' || t === 'long'){
+    v = `<div class="field"><label>허용할 입력</label><select data-o="validation">
+      ${[['none','제한 없음'],['number','숫자만'],['letters','문자만']].map(([k, l]) => `<option value="${k}" ${q.validation === k ? 'selected' : ''}>${l}</option>`).join('')}</select></div>${ph}`;
+  } else if (t === 'email'){
+    v = `<div class="field"><label>허용 도메인 (선택)</label><input data-f="domain" value="${esc(q.domain)}" placeholder="예: company.com"></div>${ph}`;
+  } else if (t === 'phone'){
+    v = ph;
+  } else {
+    v = `<div class="muted" style="font-size:12.5px">이 유형에는 추가 응답 검증이 없어요.</div>`;
+  }
+  p.innerHTML = `<div class="panel-h">고급 설정 <span class="muted">${qn(q)} · ${TYPES[t].label}</span></div>
+    <div class="panel-note">필수 입력, 선택 개수 같은 기본 옵션은 <b>문항 카드 바로 아래</b>에 있어요.</div>
+    <div class="sec"><div class="sec-t">문항 설명</div><textarea data-f="desc" placeholder="응답자에게 보여줄 보충 설명">${esc(q.desc)}</textarea></div>
+    <div class="sec"><div class="sec-t">응답 검증</div>${v}</div>`;
+}
+
+// moderator only: Ctrl+Shift+L (Cmd+Shift+L on Mac) opens and closes the event log; participants have no button for it
+document.addEventListener('keydown', e => {
+  if (!((e.ctrlKey || e.metaKey) && e.shiftKey && e.key.toLowerCase() === 'l')) return;
+  e.preventDefault(); e.stopPropagation();
+  logOpen = !logOpen; logOpen ? renderLog() : ($('#logLayer').innerHTML = '');
+}, true);
+function renderLog(){
+  const r = scenarios();
+  const names = ['① 회사 규모 드롭다운', '② 이메일 문항', '③ 주제 정확히 3개', '④ 추가 문항 필수'];
+  $('#logLayer').innerHTML = `<div class="log">
+    <div class="log-h"><b>기록 (${LOG.length})</b><span style="font-size:12px;color:#9aa1ab">${DEMO_VERSION} · ${DEMO_ENV}</span><button class="btn" data-act="copyLog">복사하기</button><button class="btn" data-act="toggleLog">닫기</button></div>
+    <div class="log-sc">${names.map((n, i) => `<span class="sc ${r[i] ? 'done' : ''}">${r[i] ? '✓' : '○'} ${n}</span>`).join('')}
+      <span class="sc ${completed ? 'done' : ''}">${completed ? '✓ task_complete' : '○ task_complete'}</span></div>
+    <div class="log-body"><table><thead><tr><th>#</th><th>시각</th><th>경과(초)</th><th>이벤트</th><th>상세</th></tr></thead><tbody>
+    ${LOG.map((l, i) => `<tr class="${l.ev === 'task_complete' ? 'complete' : ''}"><td class="num">${i + 1}</td><td class="num">${fmt(l.t)}</td><td class="num">${l.el.toFixed(1)}</td><td class="ev">${l.ev}</td><td>${esc(l.detail)}</td></tr>`).join('')}
+    </tbody></table></div></div>`;
+  const b = $('#logLayer .log-body'); b.scrollTop = b.scrollHeight;
+}
+
+function copyLog(){
+  const clean = s => String(s).replace(/[\t\r\n]+/g, ' ');
+  const rows = [['#','시각','경과(초)','이벤트','상세'], ...LOG.map((l, i) => [i + 1, fmt(l.t), l.el.toFixed(1), l.ev, clean(l.detail)])];
+  const txt = rows.map(r => r.join('\t')).join('\n');
+  const fallback = () => {
+    const ta = document.createElement('textarea'); ta.value = txt; ta.style.position = 'fixed'; ta.style.opacity = '0';
+    document.body.appendChild(ta); ta.select();
+    let ok = false; try { ok = document.execCommand('copy'); } catch (e) {}
+    ta.remove();
+    toast(ok ? `기록 ${LOG.length}건을 표 형식으로 복사했어요` : '복사하지 못했어요. 브라우저 권한을 확인해주세요');
+  };
+  if (navigator.clipboard && window.isSecureContext !== false){
+    navigator.clipboard.writeText(txt).then(() => toast(`기록 ${LOG.length}건을 표 형식으로 복사했어요`), fallback);
+  } else fallback();
+}
+
+let toastTimer;
+function toast(msg){ const t = $('#toast'); t.textContent = msg; t.classList.add('show'); clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove('show'), 1800); }
+
+/* ---------- text fields ---------- */
+function applyField(el){
+  const q = cur(); if (!q) return;
+  const f = el.dataset.f;
+  if (f === 'opt') q.options[+el.dataset.i] = el.value; else q[f] = el.value;
+  if (f === 'title'){
+    const s = document.querySelector(`.sb-item[data-id="${q.id}"] .sb-title`);
+    if (s){ s.textContent = el.value || '제목 없음'; s.classList.toggle('empty', !el.value); }
+  }
+}
+function commitField(el){
+  if (focusSnap === null || el.value === focusVal) return;
+  const q = cur(); if (!q) return;
+  undoStack.push(focusSnap);
+  const f = el.dataset.f;
+  const name = f === 'opt' ? `선택지 ${+el.dataset.i + 1}` : FIELDN[f];
+  log('question_typed', `${qn(q)} · ${name}: "${el.value}"`);
+  focusVal = el.value; focusSnap = JSON.stringify(S);
+  $('#undoBtn').disabled = false;
+  check();
+}
+
+document.addEventListener('focusin', e => {
+  const el = e.target.closest('[data-f]');
+  if (el){ focusSnap = JSON.stringify(S); focusVal = el.value; }
+});
+document.addEventListener('input', e => {
+  const el = e.target;
+  if (el.dataset.f){ applyField(el); check(); return; }
+  if (el.classList.contains('pk-search')){
+    const k = el.value.trim();
+    el.closest('.picker').querySelectorAll('.pick').forEach(b => b.style.display = !k || b.dataset.name.includes(k) ? '' : 'none');
+  }
+});
+document.addEventListener('change', e => {
+  const el = e.target;
+  if (el.dataset.f){ commitField(el); return; }
+  if (el.id === 'chkAll'){ checked = el.checked ? new Set(S.qs.map(q => q.id)) : new Set(); renderSide(); return; }
+  if (el.classList.contains('chk')){ el.checked ? checked.add(el.dataset.id) : checked.delete(el.dataset.id); renderSide(); return; }
+  if (el.dataset.o){
+    const k = el.dataset.o;
+    if (el.type === 'checkbox') setOpt(k, el.checked);
+    else if (k === 'validation') setOpt(k, el.value);
+    else setOpt(k, Number(el.value));
+  }
+});
+document.addEventListener('keydown', e => {
+  const el = e.target;
+  if (e.key === 'Enter' && el.dataset && el.dataset.f === 'opt' && !e.isComposing){
+    e.preventDefault(); commitField(el);
+    const i = +el.dataset.i; push(); cur().options.splice(i + 1, 0, ''); render();
+    setTimeout(() => $(`[data-f="opt"][data-i="${i + 1}"]`)?.focus(), 0);
+    return;
+  }
+  if (e.key === 'Enter' && el.classList && el.classList.contains('q-title') && !e.isComposing){ el.blur(); return; }
+  if (e.key === 'Escape'){ if (picker.open){ closePicker('Esc'); } else if (logOpen){ logOpen = false; $('#logLayer').innerHTML = ''; } }
+  if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z' && !/INPUT|TEXTAREA/.test(el.tagName)){ e.preventDefault(); undo(); }
+});
+
+/* ---------- clicks ---------- */
+document.addEventListener('click', e => {
+  const pick = e.target.closest('[data-type]');
+  if (pick){ pickType(pick.dataset.type); return; }
+  const a = e.target.closest('[data-act]');
+  if (!a){
+    const li = e.target.closest('.sb-item');
+    if (li && !e.target.closest('input')){ S.cur = li.dataset.id; render(); }
+    return;
+  }
+  const q = cur();
+  switch (a.dataset.act){
+    case 'undo': undo(); break;
+    case 'reset': reset(); break;
+    case 'resetYes': resetConfirmed(); break;
+    case 'resetNo': $('#confirmLayer').innerHTML = ''; break;
+    case 'openAdd': openPicker('add', a.dataset.src); break;
+    case 'changeType': openPicker('change', `${qn(q)} 유형 변경`); break;
+    case 'closePicker': closePicker(a.classList.contains('backdrop') ? '바깥 클릭' : '닫기 버튼'); break;
+    case 'addOpt':
+      push(); q.options.push(''); render();
+      setTimeout(() => $(`[data-f="opt"][data-i="${q.options.length - 1}"]`)?.focus(), 0); break;
+    case 'delOpt':
+      push(); q.options.splice(+a.dataset.i, 1); if (!q.options.length) q.options = ['']; render(); check(); break;
+    case 'addOther': setOpt('hasOther', true); break;
+    case 'delOther': setOpt('hasOther', false); break;
+    case 'set': setOpt(a.dataset.o, a.dataset.v); break;
+    case 'inc': setOpt(a.dataset.o, q[a.dataset.o] + 1); break;
+    case 'dec': setOpt(a.dataset.o, q[a.dataset.o] - 1); break;
+    case 'bulkOn': bulkRequired(true); break;
+    case 'bulkOff': bulkRequired(false); break;
+    case 'del': {
+      push(); const i = S.qs.findIndex(x => x.id === a.dataset.id);
+      S.qs.splice(i, 1); checked.delete(a.dataset.id);
+      if (S.cur === a.dataset.id) S.cur = (S.qs[i] || S.qs[i - 1] || {}).id ?? null;
+      render(); check(); break;
+    }
+    case 'toggleLog': logOpen = !logOpen; logOpen ? renderLog() : ($('#logLayer').innerHTML = ''); break;
+    case 'copyLog': copyLog(); break;
+  }
+});
+
+// the task clock starts once the participant code is in
+askParticipant(start);
+</script>
