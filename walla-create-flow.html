@@ -350,7 +350,12 @@ button.pcard:hover{border-color:var(--primary-line);box-shadow:0 2px 8px rgba(20
 .lsel-bar button:hover{background:var(--chip)}
 .lsel-bar button.pri{background:var(--primary);color:#fff}
 .lsel-bar button.pri:hover{filter:brightness(1.06);background:var(--primary)}
-.lgrp{position:absolute;border:1.5px dashed #8fb3f5;border-radius:14px;background:rgba(47,124,246,.05);pointer-events:none}
+.lgrp{position:absolute;border:1.5px dashed #8fb3f5;border-radius:14px;background:rgba(47,124,246,.05);cursor:grab}
+.lgrp:hover{border-color:var(--primary);background:rgba(47,124,246,.08)}
+/* ungroup: an × in the top-right corner of the group box, only on hover */
+.lgrp-x{position:absolute;top:5px;right:6px;width:22px;height:22px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:15px;line-height:1;color:var(--sub);background:var(--surface);border:1px solid var(--line);opacity:0;transition:opacity .12s}
+.lgrp:hover .lgrp-x,.lgrp-x:focus-visible{opacity:1}
+.lgrp-x:hover{color:var(--danger);border-color:var(--danger)}
 .lgrp span{position:absolute;top:7px;left:12px;font-size:11.5px;font-weight:600;color:var(--primary)}
 .lpb{position:absolute;height:0;border-top:1.5px dashed #9aa3af;pointer-events:none}
 .lpb span{position:absolute;right:-4px;top:-9px;background:#f7f8fa;color:var(--sub);font-size:11px;font-weight:600;padding:0 6px;line-height:16px;border-radius:4px}
@@ -674,7 +679,8 @@ button.pcard:hover{border-color:var(--primary-line);box-shadow:0 2px 8px rgba(20
 .lstage .ln{cursor:grab}
 .lstage .ln.dragging{cursor:grabbing;z-index:5;box-shadow:0 8px 24px rgba(20,30,50,.18)}
 .linner{position:absolute;left:0;top:0;transform-origin:0 0}
-.linner svg{position:absolute;left:0;top:0;overflow:visible}
+/* the connection lines sit on top but take no clicks, so the group boxes under them can be grabbed */
+.linner svg{position:absolute;left:0;top:0;overflow:visible;pointer-events:none}
 .ed-def{fill:none;stroke:#aab1bc;stroke-width:1.5}
 .ed-rule{fill:none;stroke:var(--primary);stroke-width:1.8}
 .ed-pend{fill:none;stroke:var(--primary);stroke-width:1.6;stroke-dasharray:5 4;opacity:.75}
@@ -1709,7 +1715,7 @@ function renderCanvas(){
     ${parts.filter(p => p.label).map(p => `<text x="${p.lx}" y="${p.ly}" text-anchor="${p.anchor}" class="ed-label ${p.cls === 'rule' || p.cls === 'pend' ? 'rule' : ''}">${esc(p.label)}</text>`).join('')}</g></svg>`;
   const node = (id, p) => {
     const st = `left:${p.cx - p.w / 2 + ox}px;top:${p.y + oy}px;width:${p.w}px`;
-    const drag = nodeDrag?.moved && nodeDrag.id === id ? 'dragging' : '';
+    const drag = nodeDrag?.moved && nodeDrag.start.some(p => p.k === id) ? 'dragging' : '';
     if (id === 'start') return `<div class="ln start ${drag}" data-lid="start" style="${st}">시작</div>`;
     const run = `${trail.seen.has(id) ? 'visited' : ''} ${trail.cur === id ? 'cur' : ''}`;
     if (END[id]) return `<div class="ln end ${run} ${drag}" data-lid="${id}" style="${st}">${END[id].label}<small>${END[id].desc}</small></div>`;
@@ -1728,7 +1734,7 @@ function renderCanvas(){
     const ps = L.qs.filter(q => q.group === g && P[q.id]).map(q => P[q.id]); if (!ps.length) return '';
     const x0 = Math.min(...ps.map(p => p.cx - p.w / 2)) - 14, x1 = Math.max(...ps.map(p => p.cx + p.w / 2)) + 14;
     const y0 = Math.min(...ps.map(p => p.y)) - 30, y1 = Math.max(...ps.map(p => p.y)) + NH + 12;
-    return `<div class="lgrp" style="left:${x0 + ox}px;top:${y0 + oy}px;width:${x1 - x0}px;height:${y1 - y0}px"><span>${esc(L.groups[g].name)} · ${ps.length}개</span></div>`;
+    return `<div class="lgrp" data-lgrp="${g}" title="끌어서 그룹 전체 옮기기" style="left:${x0 + ox}px;top:${y0 + oy}px;width:${x1 - x0}px;height:${y1 - y0}px"><span>${esc(L.groups[g].name)} · ${ps.length}개</span><button class="lgrp-x" data-act="lDelGroup" data-g="${g}" title="그룹 해제 (문항은 그대로)" aria-label="그룹 해제">×</button></div>`;
   }).join('');
   // Shift-picked nodes get a small action bar at the midpoint between them: swap (exactly two) and group
   const picked = L.test ? [] : L.qs.filter(q => L.checked.has(q.id) && P[q.id]).map(q => P[q.id]);
@@ -2048,7 +2054,7 @@ function logicClick(e){
       const g = a.dataset.g;
       L.qs.forEach(x => { if (x.group === g) x.group = null; });
       log('group_deleted', `"${L.groups[g].name}" (문항은 그대로)`);
-      delete L.groups[g]; renderStruct(); return true;
+      delete L.groups[g]; afterLogic(); return true;
     }
   }
   return false;
@@ -2066,10 +2072,13 @@ document.addEventListener('pointerdown', e => {
     return;
   }
   if (e.button !== 0) return;
-  const n = e.target.closest('.lstage .ln');
-  if (n){
-    const id = n.dataset.lnode || n.dataset.lid, p = L.lastP[id];
-    nodeDrag = {id, x: e.clientX, y: e.clientY, cx: p.cx, py: p.y, moved: false, before: snap()};
+  // a node in a group carries the whole group along (Alt+drag moves just that node); so does dragging the group's dashed box
+  const n = e.target.closest('.lstage .ln'), gb = !n && !e.target.closest('.lgrp-x') && e.target.closest('.lstage .lgrp');
+  if (n || gb){
+    const id = n ? n.dataset.lnode || n.dataset.lid : null;
+    const g = gb ? gb.dataset.lgrp : !e.altKey && L.qs.find(x => x.id === id)?.group;
+    const ids = g ? L.qs.filter(x => x.group === g && L.lastP[x.id]).map(x => x.id) : [id];
+    nodeDrag = {id, g, start: ids.map(k => ({k, cx: L.lastP[k].cx, y: L.lastP[k].y})), x: e.clientX, y: e.clientY, moved: false, before: snap()};
     L.frame = {ox: L.ox, oy: L.oy, W: L.W, H: L.H};
     return;
   }
@@ -2081,7 +2090,7 @@ document.addEventListener('pointermove', e => {
     const dx = (e.clientX - nodeDrag.x) / L.zoom, dy = (e.clientY - nodeDrag.y) / L.zoom;
     if (!nodeDrag.moved && Math.hypot(dx, dy) < 4) return;
     nodeDrag.moved = true;
-    L.pos[nodeDrag.id] = {cx: nodeDrag.cx + dx, y: nodeDrag.py + dy};
+    nodeDrag.start.forEach(p => { L.pos[p.k] = {cx: p.cx + dx, y: p.y + dy}; });
     renderCanvas();
     return;
   }
@@ -2099,7 +2108,8 @@ document.addEventListener('pointerup', () => {
     if (d.moved){
       pushHist('logic', d.before);
       suppressClick = true; setTimeout(() => { suppressClick = false; }, 0);
-      log('logic_node_moved', d.id === 'start' ? '시작' : END[d.id] ? END[d.id].label : `${lno(lq(d.id))} ${short(lq(d.id).title)}`);
+      if (d.g) log('logic_group_moved', `${L.groups[d.g]?.name || '그룹'} · ${d.start.length}개${d.id ? '' : ' (그룹 상자)'}`);
+      else log('logic_node_moved', d.id === 'start' ? '시작' : END[d.id] ? END[d.id].label : `${lno(lq(d.id))} ${short(lq(d.id).title)}`);
       // the canvas origin may shift once the drag ends; scroll by the same amount so nothing jumps
       renderCanvas();
       L.px = (L.px || 0) - (L.ox - before.ox) * L.zoom; L.py = (L.py || 0) - (L.oy - before.oy) * L.zoom; panStage();
