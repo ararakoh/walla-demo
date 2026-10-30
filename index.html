@@ -235,16 +235,29 @@ button.pcard:hover{border-color:var(--primary-line);box-shadow:0 2px 8px rgba(20
 .ob-pane-f{display:flex;justify-content:flex-end;gap:8px;padding:14px 0 0;margin-top:16px;border-top:1px solid var(--line)}
 .ob-pane-f .btn{height:40px;padding:0 16px;border-radius:10px}
 .tpl-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px;padding:18px 20px 22px}
-.tpl{display:flex;flex-direction:column;align-items:flex-start;gap:6px;text-align:left;padding:16px;border:1px solid var(--line);border-radius:14px;background:var(--surface);transition:border-color .12s,box-shadow .12s}
-.tpl:hover{border-color:var(--primary-line);box-shadow:0 6px 20px rgba(20,30,50,.08)}
-.tpl b{font-size:15px}
+.tpl{display:flex;flex-direction:column;align-items:stretch;text-align:left;padding:0;border:1px solid var(--line);border-radius:14px;background:var(--surface);overflow:hidden;transition:border-color .12s,box-shadow .12s,transform .12s}
+.tpl:hover{border-color:var(--primary-line);box-shadow:0 8px 24px rgba(20,30,50,.10);transform:translateY(-2px)}
+.tpl-img{display:flex;align-items:flex-end;justify-content:center;height:172px;padding:18px 18px 0;background:var(--tb);overflow:hidden}
+.tt-page{display:flex;flex-direction:column;gap:7px;width:100%;max-width:230px;height:100%;padding:14px 14px 0;background:#fff;border-radius:10px 10px 0 0;box-shadow:0 4px 16px rgba(20,30,50,.10);transition:transform .2s}
+.tpl:hover .tt-page{transform:translateY(-4px)}
+.tt-page i{font-style:normal}
+.tt-page > i{flex:none}
+.tt-h,.tt-in,.tt-btn{display:block}
+.tt-h{font-size:9px;font-weight:700;color:var(--tc);letter-spacing:.02em}
+.tt-q{font-size:11.5px;font-weight:700;color:#1f2329;line-height:1.35;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.tt-opt{display:flex;align-items:center;gap:6px;height:20px;padding:0 7px;border:1px solid #e6e8ec;border-radius:6px;font-size:9.5px;color:#4a525d;white-space:nowrap;overflow:hidden}
+.tt-opt b{flex:none;width:8px;height:8px;border-radius:50%;border:1.5px solid #c4c9d1}
+.tt-opt.on{border-color:var(--tc)}
+.tt-opt.on b{border:3px solid var(--tc)}
+.tt-scale{display:flex;gap:4px}
+.tt-scale b{flex:1;max-width:18px;height:18px;border-radius:50%;border:1px solid #d9dde4;font-size:8px;font-weight:600;color:#6b7280;display:flex;align-items:center;justify-content:center}
+.tt-scale b.on{background:var(--tc);border-color:var(--tc);color:#fff}
+.tt-in{height:22px;border:1px solid #e6e8ec;border-radius:6px;padding:0 7px;font-size:9.5px;line-height:20px;color:#b3b9c2}
+.tt-btn{margin-top:auto;margin-bottom:12px;height:22px;border-radius:6px;background:var(--tc);color:#fff;font-size:9.5px;font-weight:700;line-height:22px;text-align:center}
+.tpl-body{display:flex;flex-direction:column;gap:5px;padding:14px 16px 16px}
+.tpl-body b{font-size:15px}
 .tpl-ds{font-size:12.5px;color:var(--sub)}
-.tpl ul{list-style:none;margin:6px 0 4px;padding:0;width:100%;display:flex;flex-direction:column;gap:5px}
-.tpl li{display:flex;align-items:center;gap:7px;font-size:12.5px;color:var(--text);min-width:0}
-.tpl li span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.tpl li .ico{width:20px;height:20px;font-size:10.5px}
-.tpl li.more{color:var(--muted);padding-left:27px}
-.tpl-n{margin-top:auto;font-size:12.5px;font-weight:600;color:var(--primary)}
+.tpl-n{margin-top:6px;font-size:12.5px;font-weight:600;color:var(--primary)}
 .ai-wrap{width:min(100%,640px);margin:0 auto;padding:22px 20px 22px}
 .ai-l{display:block;font-size:14px;font-weight:700;margin-bottom:10px}
 #aiPrompt{width:100%;border:1px solid var(--line);border-radius:12px;padding:12px 14px;font:inherit;font-size:14px;resize:none;outline:none;line-height:1.5}
@@ -1330,10 +1343,21 @@ function obBack(){
   p.hidden = true; p.innerHTML = ''; h.hidden = false;
   document.querySelectorAll('.ob-start .choice.on').forEach(c => c.classList.remove('on'));
 }
+// each template card leads with a picture of its first page: the survey in its own colours, first question and button
+const TPL_LOOK = {csat: ['#0a6cff', '#eaf2ff'], event: ['#2f9e55', '#e6f6ea'], webinar: ['#7c5cf0', '#f1ecff'], nps: ['#e8893a', '#fff3e6']};
+function tplThumb(t){
+  const [type, title, opts, extra] = t.qs[0], x = extra || {};
+  const rows = list => list.slice(0, 3).map((o, k) => `<i class="tt-opt ${k ? '' : 'on'}"><b></b>${esc(o)}</i>`).join('');
+  const ans = type === 'scale' ? `<i class="tt-scale">${Array.from({length: Math.min(x.scaleMax || 5, 10)}, (_, k) => `<b class="${k === 3 ? 'on' : ''}">${k + 1}</b>`).join('')}</i>`
+    : type === 'privacy' ? rows(AGREE)
+    : T[type].kind === 'choice' ? rows(opts)
+    : `<i class="tt-in">${esc(T[type].ph || '응답 입력')}</i>`;
+  return `<span class="tpl-img" style="--tc:${TPL_LOOK[t.key][0]};--tb:${TPL_LOOK[t.key][1]}" aria-hidden="true"><span class="tt-page">
+    <i class="tt-h">${esc(t.name)}</i><i class="tt-q">${esc(title)}</i>${ans}<i class="tt-btn">다음</i></span></span>`;
+}
 function openTemplates(){
-  showPane('템플릿 고르기', `<div class="tpl-grid">${TEMPLATES.map((t, i) => `<button class="tpl" data-act="tplUse" data-t="${i}"><b>${t.name}</b><span class="tpl-ds">${t.desc}</span>
-      <ul>${t.qs.slice(0, 3).map(q => `<li>${ico(q[0])}<span>${esc(q[1])}</span></li>`).join('')}${t.qs.length > 3 ? `<li class="more">외 ${t.qs.length - 3}개</li>` : ''}</ul>
-      <span class="tpl-n">문항 ${t.qs.length}개 · 이 템플릿 쓰기 →</span></button>`).join('')}</div>`, 'tpl');
+  showPane('템플릿 고르기', `<div class="tpl-grid">${TEMPLATES.map((t, i) => `<button class="tpl" data-act="tplUse" data-t="${i}">${tplThumb(t)}
+      <span class="tpl-body"><b>${t.name}</b><span class="tpl-ds">${t.desc}</span><span class="tpl-n">문항 ${t.qs.length}개 · 이 템플릿 쓰기 →</span></span></button>`).join('')}</div>`, 'tpl');
   log('template_gallery_view');
 }
 
