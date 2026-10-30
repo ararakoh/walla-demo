@@ -205,6 +205,11 @@ button.pcard:hover{border-color:var(--primary-line);box-shadow:0 2px 8px rgba(20
 .choice .tt{display:block;font-size:14px;font-weight:700;margin-bottom:6px}
 .choice .ds{display:block;color:var(--sub);font-size:11.5px;line-height:1.55}
 .import-link{margin-top:30px;display:flex;align-items:center;gap:6px;font-size:12px;color:var(--sub)}
+/* the team's onboarding guide in a frame over a dimmed, slightly blurred screen */
+.guide-layer{position:fixed;inset:0;z-index:150;background:rgba(20,25,35,.45);backdrop-filter:blur(1.5px);animation:gIn .25s ease;transition:opacity .28s}
+.guide-layer.out{opacity:0}
+.guide-layer iframe{display:block;width:100%;height:100%;border:0;background:transparent;color-scheme:light}
+@keyframes gIn{from{opacity:0}}
 /* onboarding: the editor layout, empty, with the ways to start under the blank card */
 .ob-grid{flex:1;min-height:0;display:grid;grid-template-columns:240px minmax(0,1fr);gap:14px;padding:14px}
 .ob-fields{pointer-events:none;user-select:none}
@@ -1303,6 +1308,31 @@ function formatScreen(){
     </div></div>`;
   log('format_view');
 }
+
+/* the team's onboarding guide (walla-onboarding.html), shown once per visit over the dimmed screen after the first
+   '+ 프로젝트 만들기'. It runs in a frame in embed mode: its events come back here and go out with this page's log. */
+let guideShown = false;
+function showGuide(){
+  if (guideShown || $('.guide-layer')) return;
+  guideShown = true;
+  const w = document.createElement('div');
+  w.className = 'guide-layer';
+  w.innerHTML = '<iframe src="walla-onboarding.html?embed" title="설문 제작 가이드"></iframe>';
+  document.body.appendChild(w);
+  const fr = w.querySelector('iframe');
+  fr.addEventListener('load', () => fr.focus());
+}
+function closeGuide(){
+  const w = $('.guide-layer'); if (!w) return;
+  w.classList.add('out');
+  setTimeout(() => w.remove(), 280);
+}
+window.addEventListener('message', e => {
+  const fr = $('.guide-layer iframe'), d = e.data;
+  if (!fr || e.source !== fr.contentWindow || d?.walla !== 'onboarding') return;
+  if (d.type === 'event' && /^onboarding_[a-z_]+$/.test(d.ev)) log(d.ev, String(d.detail ?? '').slice(0, 200));
+  if (d.type === 'close') closeGuide();
+});
 
 /* ready-made surveys: [type, question, options, extra settings] */
 const TEMPLATES = [
@@ -3596,7 +3626,7 @@ document.addEventListener('click', e => {
   const a = e.target.closest('[data-act]'); if (!a) return;
   const q = E ? qOf(a) : null;
   switch (a.dataset.act){
-    case 'create': newProject(); log('create_clicked', CUR.name); formatScreen(); break;
+    case 'create': newProject(); log('create_clicked', CUR.name); formatScreen(); showGuide(); break;
     case 'publish':
       if (CUR.status === 'published') doPublish(); else openPublish();
       break;

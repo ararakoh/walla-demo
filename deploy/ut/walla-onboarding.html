@@ -1,0 +1,699 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>왈라 제작 온보딩</title>
+<script>
+// design version: raise to v2, v3 … whenever the design changes; sent with every Amplitude event as "version"
+const DEMO_VERSION = 'ut-v1';
+// where events come from: 'test' (team testing build) or 'ut' (the usability-test build); sent with every event as "env"
+const DEMO_ENV = 'ut';
+</script>
+<!-- Amplitude SDK files loaded directly: the key-specific loader script starts Amplitude itself, with autocapture on, whenever init has not run yet -->
+<script src="https://cdn.amplitude.com/libs/analytics-browser-2.42.4-min.js.gz" integrity="sha384-lKBFu+lrE+l3rHaNqttqd3e3ga1kwCKyeO1JiVVq2NlrrkHTdt8SobN3bqqLSKSw" crossorigin="anonymous"></script>
+<script src="https://cdn.amplitude.com/libs/plugin-session-replay-browser-1.32.1-min.js.gz" integrity="sha384-hWmXGSUzyw8M7w4rJJlIFGzPeQ65AgJf1YvcH6h4TZPbl20L+aSsZmLLdaPw+J7m" crossorigin="anonymous"></script>
+<style>
+/* participant code: a start dialog and a small chip, styled on their own so every demo shares them */
+.pid-bg{position:fixed;inset:0;z-index:200;background:rgba(20,25,35,.45);display:flex;align-items:center;justify-content:center}
+.pid-box{width:340px;max-width:calc(100vw - 32px);box-sizing:border-box;background:#fff;color:#1f2329;border-radius:16px;padding:24px;box-shadow:0 20px 60px rgba(0,0,0,.25)}
+.pid-box h2{margin:0 0 6px;font-size:18px}
+.pid-box p{margin:0 0 14px;font-size:13px;color:#6b7280;line-height:1.5}
+.pid-box input{display:block;width:100%;box-sizing:border-box;height:42px;border:1px solid #dfe3e8;border-radius:10px;padding:0 12px;font:inherit;font-size:15px;outline:none;text-transform:uppercase}
+.pid-box input:focus{border-color:#2f7cf6}
+.pid-err{min-height:18px;margin:6px 0 4px;font-size:12px;color:#d4533b}
+.pid-box button{width:100%;height:42px;border:0;border-radius:10px;background:#2f7cf6;color:#fff;font:inherit;font-weight:700;font-size:14px;cursor:pointer}
+.pid-chip{position:fixed;left:16px;bottom:20px;z-index:30;height:32px;display:flex;align-items:center;gap:8px;padding:0 5px 0 12px;border:1px solid #dfe3e8;border-radius:16px;background:#fff;color:#4a525d;font-size:12.5px;box-shadow:0 2px 8px rgba(0,0,0,.08)}
+.pid-chip button{height:24px;padding:0 10px;border:0;border-radius:12px;background:#eef1f5;color:#4a525d;font:inherit;font-size:12px;cursor:pointer}
+</style>
+<script>
+/* Amplitude: every logged event is sent with the same name and fields, under the participant code as user ID.
+   Events logged before the code is entered wait in a queue and keep their original time.
+   Amplitude only starts once a real code is in; the code TEST sends nothing. */
+// UT Amplitude project key (browser API key). If it is ever emptied, Amplitude never starts and nothing is sent
+const AMP_KEY = '5d84154822b56a3dec348a97f9c358e8';
+const AMP_TEST = 'TEST';
+let ampPid = null, ampLastReal = null, ampReady = false;
+const ampQueue = [];
+if (!window.amplitude) console.error('[amplitude] loader did not load — no events will be sent');
+function ampStart(){
+  if (ampReady || !window.amplitude) return;
+  // replay stays on, but the text in every input field is masked. The project's replay settings are always fetched
+  // (replay turns itself off without them); these selectors are added to the project's, so inputs stay masked either way.
+  window.amplitude.add(window.sessionReplay.plugin({sampleRate: 1, serverZone: 'US',
+    privacyConfig: {defaultMaskLevel: 'medium', maskSelector: ['input', 'textarea', 'select', '[contenteditable]']}}));
+  window.amplitude.init(AMP_KEY, {
+    serverZone: 'US',
+    // only the events this demo logs: every autocapture type off, and project remote settings are not fetched to turn them back on
+    autocapture: {attribution: false, pageViews: false, sessions: false, formInteractions: false, fileDownloads: false,
+      elementInteractions: false, frustrationInteractions: false, pageUrlEnrichment: false, webVitals: false, networkTracking: false},
+    fetchRemoteConfig: false,
+    remoteConfig: {fetchRemoteConfig: false},
+    minIdLength: 1,       // codes like P01 are shorter than Amplitude's default 5-character minimum
+  });
+  ampReady = true;
+}
+function ampTrack(ev, props){
+  if (!window.amplitude || !AMP_KEY || ampPid === AMP_TEST) return;
+  props = {...props, version: DEMO_VERSION, env: DEMO_ENV};
+  if (!ampPid){ ampQueue.push([ev, props, Date.now()]); return; }
+  window.amplitude.track(ev, props);
+}
+function ampSetParticipant(code){
+  ampPid = code;
+  if (code === AMP_TEST){
+    ampQueue.length = 0;
+    if (ampReady) window.amplitude.setOptOut(true);   // stops events and replay for the rest of this test run
+  } else if (window.amplitude && AMP_KEY){
+    ampStart();
+    window.amplitude.setOptOut(false);
+    if (ampLastReal && ampLastReal !== code) window.amplitude.reset();   // a new participant starts a fresh device and session
+    window.amplitude.setUserId(code);
+    ampLastReal = code;
+    ampQueue.splice(0).forEach(([ev, props, time]) => window.amplitude.track(ev, props, {time}));
+  }
+  let chip = document.querySelector('.pid-chip');
+  if (!chip){
+    chip = document.createElement('div'); chip.className = 'pid-chip';
+    chip.innerHTML = '<span></span><button type="button">변경</button>';
+    chip.querySelector('button').addEventListener('click', () => askParticipant());
+    document.body.appendChild(chip);
+  }
+  chip.querySelector('span').textContent = code === AMP_TEST ? '참여자 TEST · 전송 안 함' : `참여자 ${code}`;
+}
+// asks for the participant code (e.g. P01) before the demo starts; onDone runs once a valid code is in
+function askParticipant(onDone){
+  const bg = document.createElement('div'); bg.className = 'pid-bg';
+  bg.innerHTML = `<form class="pid-box" role="dialog" aria-label="참여자 코드 입력" novalidate>
+    <h2>참여자 코드</h2><p>이번 테스트 참여자의 코드를 입력해주세요. 예: UT01</p>
+    <input name="pid" maxlength="20" autocomplete="off" spellcheck="false" aria-label="참여자 코드" value="${ampPid || ''}">
+    <div class="pid-err" role="alert"></div><button type="submit">시작하기</button></form>`;
+  document.body.appendChild(bg);
+  const form = bg.querySelector('form'), input = form.pid;
+  // keep the demo's own shortcuts out of this dialog
+  ['keydown', 'click', 'input', 'change'].forEach(t => bg.addEventListener(t, e => e.stopPropagation()));
+  form.addEventListener('submit', e => {
+    e.preventDefault();
+    const code = input.value.trim().toUpperCase();
+    if (!/^[A-Z0-9_-]{1,20}$/.test(code)){ form.querySelector('.pid-err').textContent = '영문, 숫자, -, _ 로 20자 안에서 입력해주세요'; input.focus(); return; }
+    bg.remove();
+    ampSetParticipant(code);
+    onDone && onDone();
+  });
+  setTimeout(() => input.focus(), 0);
+}
+</script>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700&family=Noto+Serif+KR:wght@600;700&family=Gowun+Dodum&display=swap">
+<style>
+:root{
+  --bg:#f7f8fa; --surface:#fff; --line:#e6e8ec; --line2:#eef0f3; --text:#1f2329; --sub:#6b7280; --muted:#9aa1ab;
+  --primary:#0a6cff; --primary-hover:#085ad6; --primary-soft:#eaf2ff; --primary-line:#bcd5ff; --chip:#f3f4f6; --dark:#1f2329;
+  --sans:"Pretendard","Noto Sans KR","Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--text);font:14px/1.5 var(--sans);overflow:hidden}
+button{font:inherit;color:inherit;cursor:pointer;border:0;background:none}
+button:focus-visible{outline:2px solid var(--primary);outline-offset:2px}
+.app-scroll{height:100%;overflow:auto}
+.app{min-width:1280px;height:100%;display:flex;flex-direction:column;position:relative}
+
+/* ---------- background: the editor, as in the demo ---------- */
+.demo-bar{height:40px;flex:none;background:var(--dark);color:#fff;display:flex;align-items:center;justify-content:space-between;padding:0 20px;font-size:12.5px}
+.demo-bar span{opacity:.75}
+.demo-bar button{height:28px;padding:0 12px;border-radius:6px;background:var(--primary);color:#fff;font-size:12.5px;font-weight:600}
+.demo-bar button:hover{background:var(--primary-hover)}
+.ed-head{height:64px;flex:none;background:var(--surface);border-bottom:1px solid var(--line);display:grid;grid-template-columns:1fr auto 1fr;align-items:center;padding:0 16px;position:relative;z-index:60}
+.eh-steps{display:flex;align-items:center;gap:14px}
+.st{display:flex;align-items:center;gap:10px;font-size:15px;color:var(--muted);padding:6px 10px;border-radius:10px;transition:background .35s,box-shadow .35s,color .35s}
+.st-n{width:26px;height:26px;border-radius:50%;border:1.5px solid #c9ced6;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:600;transition:all .35s}
+.st.on{color:var(--text);font-weight:700}
+.st.on .st-n{background:var(--primary);border-color:var(--primary);color:#fff}
+.st.spot{background:var(--primary-soft);box-shadow:0 0 0 2px var(--primary-line);color:var(--text);font-weight:700}
+.st.spot .st-n{background:var(--primary);border-color:var(--primary);color:#fff}
+.st-line{width:36px;height:1.5px;background:#d5d9e0}
+.eh-right{display:flex;justify-content:flex-end;gap:8px}
+.tb{height:38px;padding:0 14px;border-radius:9px;background:var(--chip);color:#3b424c;font-size:14px;font-weight:500}
+.tb.pub{background:var(--primary);color:#fff;font-weight:700}
+.ed-body{flex:1;min-height:0;display:grid;grid-template-columns:240px minmax(0,1fr) 380px;gap:14px;padding:14px}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:18px 14px}
+.panel h4{margin:0 0 12px;font-size:14px}
+.panel .empty{color:var(--muted);font-size:13px;padding:0 4px}
+.center{display:flex;flex-direction:column;align-items:center;gap:30px;padding-top:8px}
+.c-title{width:min(100%,624px);background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:20px 24px;color:#b7bdc6;font-size:14px;line-height:1.9}
+.c-ph{width:min(100%,624px);height:112px;border:1.5px dashed #dfe3e8;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:19px;color:#5b636e}
+.bg-search{height:36px;border:1px solid var(--line);border-radius:9px;margin-bottom:14px;padding:0 12px;display:flex;align-items:center;color:var(--muted);font-size:13px}
+.bg-tiles{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.bg-tile{height:150px;border:1px solid var(--line);border-radius:12px;padding:12px;font-weight:600;font-size:14px}
+.bg-tile i{display:block;height:44px;margin-top:10px;border-radius:8px;background:#f5f6f8}
+
+/* ---------- onboarding overlay ---------- */
+.ob-layer{position:absolute;left:0;right:0;top:104px;bottom:0;z-index:50;background:rgba(20,25,35,.42);backdrop-filter:blur(1.5px);display:flex;align-items:center;justify-content:center;padding:24px;transition:opacity .3s}
+.ob-layer.hide{opacity:0;pointer-events:none}
+.app.ob-open .ed-head{pointer-events:none}
+.ob{width:744px;background:var(--surface);border-radius:22px;box-shadow:0 24px 70px rgba(10,20,40,.28);padding:12px 12px 20px;animation:pop .45s cubic-bezier(.2,.9,.3,1.15)}
+@keyframes pop{from{opacity:0;transform:translateY(14px) scale(.97)}}
+.ob-layer.hide .ob{transform:translateY(10px) scale(.98);transition:transform .3s}
+
+/* stage: the animated illustration */
+.stage{position:relative;height:340px;border-radius:14px;background:#f4f6f9;overflow:hidden;
+  background-image:radial-gradient(#dde1e7 1px,transparent 1.2px);background-size:16px 16px}
+.scene{position:absolute;inset:0}
+.cursor{position:absolute;left:0;top:0;width:22px;height:22px;z-index:30;pointer-events:none;transform:translate(640px,300px);
+  transition-property:transform,opacity;transition-timing-function:cubic-bezier(.45,.05,.25,1);transition-duration:700ms;filter:drop-shadow(0 2px 3px rgba(0,0,0,.25))}
+.cursor svg{position:absolute;left:-3px;top:-2px;transition:transform .15s}
+.cursor::after{content:"";position:absolute;left:-14px;top:-14px;width:28px;height:28px;border-radius:50%;background:rgba(10,108,255,.28);transform:scale(0);opacity:0}
+.cursor.clk::after{animation:ripple .45s ease-out}
+.cursor.down svg{transform:scale(.86)}
+.cursor.off{opacity:0}
+@keyframes ripple{0%{transform:scale(.2);opacity:1}100%{transform:scale(1.5);opacity:0}}
+
+/* text */
+.ob-text{padding:22px 22px 0;min-height:182px}
+.ob-text.swap{animation:txt .4s ease}
+@keyframes txt{from{opacity:0;transform:translateY(6px)}}
+.eyebrow{font-size:12.5px;font-weight:700;color:var(--primary);letter-spacing:.01em;margin-bottom:6px}
+.ob-text h2{margin:0 0 8px;font-size:22px;letter-spacing:-.3px}
+.ob-text p{margin:0;color:var(--sub);font-size:14px;line-height:1.65}
+.beats{display:flex;align-items:center;gap:6px;margin-top:16px;flex-wrap:wrap}
+.beat{height:30px;padding:0 12px;border-radius:15px;background:var(--chip);color:var(--muted);font-size:12.5px;font-weight:600;display:inline-flex;align-items:center;gap:6px;transition:all .3s}
+.beat b{width:18px;height:18px;border-radius:50%;background:#dfe3e8;color:#fff;font-size:11px;display:inline-flex;align-items:center;justify-content:center;transition:background .3s}
+.beat.on{background:var(--primary-soft);color:var(--primary)}
+.beat.on b{background:var(--primary)}
+.beat.done{color:var(--sub)}
+.beat.done b{background:#9fb9e6}
+.beat-arrow{color:#c4c9d1;font-size:12px}
+
+/* footer */
+.ob-foot{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;padding:18px 22px 0}
+.btn{height:40px;padding:0 16px;border-radius:10px;font-size:14px;font-weight:600;display:inline-flex;align-items:center;gap:6px}
+.btn.ghost{color:var(--sub)}
+.btn.ghost:hover{background:var(--chip);color:var(--text)}
+.btn.line{border:1px solid var(--line);color:var(--sub)}
+.btn.line:hover{background:var(--bg)}
+.btn.primary{background:var(--primary);color:#fff}
+.btn.primary:hover{background:var(--primary-hover)}
+.btn[hidden]{display:none}
+.foot-r{display:flex;justify-content:flex-end;gap:4px}
+.dots{display:flex;align-items:center;gap:6px}
+.dot{width:8px;height:8px;border-radius:4px;background:#d5d9e0;position:relative;overflow:hidden;transition:width .35s cubic-bezier(.3,.8,.3,1),background .3s;padding:0}
+.dot.seen{background:#a9c6f5}
+.dot.on{width:34px;background:#d5d9e0}
+.dot i{position:absolute;inset:0;width:0;background:var(--primary);border-radius:4px}
+.dot.on i{animation:var(--fill,none)}
+@keyframes fill{from{width:0}to{width:100%}}
+
+/* ---------- scene 0: overview ---------- */
+.ov{position:absolute;left:0;right:0;top:34px;display:flex;justify-content:center;gap:26px}
+.ov-col{width:196px;display:flex;flex-direction:column;align-items:center}
+.ov-step{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;color:var(--muted);margin-bottom:12px;transition:color .3s}
+.ov-n{width:24px;height:24px;border-radius:50%;border:1.5px solid #c9ced6;background:#fff;display:flex;align-items:center;justify-content:center;font-size:12px;transition:all .35s}
+.ov-col.on .ov-step,.ov-col.done .ov-step{color:var(--text)}
+.ov-col.on .ov-n{background:var(--primary);border-color:var(--primary);color:#fff;box-shadow:0 0 0 5px rgba(10,108,255,.15)}
+.ov-col.done .ov-n{background:#fff;border-color:var(--primary);color:var(--primary)}
+.ov-card{width:196px;height:210px;background:#fff;border:1px solid var(--line);border-radius:14px;padding:14px;position:relative;transition:transform .45s cubic-bezier(.3,.9,.3,1.2),box-shadow .45s,border-color .45s,opacity .45s;opacity:.55}
+.ov-col.on .ov-card{opacity:1;transform:translateY(-6px);border-color:var(--primary-line);box-shadow:0 14px 30px rgba(10,60,140,.14)}
+.ov-col.done .ov-card{opacity:1}
+.ov-link{position:absolute;top:176px;height:2px;width:26px;background:#d5d9e0;overflow:hidden}
+.ov-link i{display:block;height:100%;width:0;background:var(--primary);transition:width .6s ease}
+.ov-link.on i{width:100%}
+.mini-chip{display:inline-flex;height:18px;padding:0 7px;border-radius:5px;background:var(--chip);font-size:10px;color:var(--sub);align-items:center;gap:4px}
+.mini-q{font-size:12px;font-weight:700;margin:10px 0 8px}
+.mini-opt{height:22px;border-radius:6px;background:#f3f4f6;margin-bottom:6px;display:flex;align-items:center;gap:6px;padding:0 8px;font-size:10px;color:#4a525d}
+.mini-opt b{width:8px;height:8px;border-radius:50%;border:1.5px solid #c4c9d1}
+.mini-opt.sel b{border-color:var(--primary);background:var(--primary)}
+.mini-node{position:absolute;height:24px;border:1px solid var(--line);background:#fff;border-radius:6px;font-size:10px;display:flex;align-items:center;padding:0 8px;gap:5px;color:#3b424c}
+.mini-node b{color:var(--primary);font-size:9.5px}
+.mini-node.start{background:var(--primary);color:#fff;border-color:var(--primary);justify-content:center}
+.mini-node.end{border-style:dashed;color:var(--sub)}
+.mini-sw{display:flex;gap:6px;margin:4px 0 12px}
+.mini-sw i{width:18px;height:18px;border-radius:50%}
+.mini-prev{border:1px solid var(--line);border-radius:10px;padding:10px}
+.mini-btn{height:24px;border-radius:12px;background:#1d9a6c;color:#fff;font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;margin-top:8px}
+
+/* ---------- scene 1: question create & edit ---------- */
+.qcard{position:absolute;left:22px;top:22px;width:418px;height:296px;border-radius:14px;background:#fff;border:1.5px dashed #d8dce2;transition:border-color .35s,box-shadow .35s;overflow:hidden}
+.qc-empty{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#5b636e;font-size:15px;transition:opacity .3s}
+.qc-body{padding:16px 20px;opacity:0;transform:translateY(6px);transition:opacity .35s,transform .35s}
+.qcard.filled{border:1.5px solid var(--primary-line);box-shadow:0 8px 24px rgba(10,60,140,.08)}
+.qcard.filled .qc-empty{opacity:0}
+.qcard.filled .qc-body{opacity:1;transform:none}
+.qc-top{display:flex;align-items:center;gap:8px}
+.qn{color:var(--primary);font-weight:700;font-size:13px}
+.qtype{height:26px;padding:0 9px;border-radius:7px;background:var(--chip);font-size:12px;color:#3b424c;display:inline-flex;align-items:center;gap:5px}
+.badge{height:22px;padding:0 8px;border-radius:11px;font-size:11px;font-weight:700;display:inline-flex;align-items:center;transform:scale(.6);opacity:0;transition:all .3s cubic-bezier(.3,.9,.3,1.4)}
+.badge.show{transform:none;opacity:1}
+.badge.req{background:#fdecec;color:#e5484d}
+.badge.multi{background:var(--primary-soft);color:var(--primary)}
+.qc-title{margin:12px 0 2px;font-size:17px;font-weight:700;min-height:26px;display:flex;align-items:center}
+.caret{display:inline-block;width:1.5px;height:19px;background:var(--primary);margin-left:2px;opacity:0}
+.caret.on{animation:blink .9s steps(1) infinite}
+@keyframes blink{50%{opacity:1}}
+.qc-desc{font-size:12.5px;color:#c4c9d1;margin-bottom:12px}
+.opt{height:34px;border-radius:8px;background:#f3f4f6;display:flex;align-items:center;gap:10px;padding:0 12px;margin-bottom:7px;font-size:13px;color:#2b3038;animation:optin .35s cubic-bezier(.3,.9,.3,1.2)}
+@keyframes optin{from{opacity:0;transform:translateY(-6px) scale(.98)}}
+.opt b{width:13px;height:13px;border-radius:50%;border:1.5px solid #c4c9d1;flex:none;transition:border-radius .3s}
+.opts.multi .opt b{border-radius:3px}
+.qc-add{display:flex;gap:16px;margin-top:6px;font-size:12px;color:var(--primary);font-weight:500}
+.qc-add span{padding:2px 0}
+.rp{position:absolute;left:456px;top:22px;width:218px;height:296px;background:#fff;border:1px solid var(--line);border-radius:14px}
+.rp-layer{position:absolute;inset:0;padding:14px;opacity:0;transform:translateX(8px);transition:opacity .35s,transform .35s;pointer-events:none}
+.rp-layer.show{opacity:1;transform:none}
+.rp b.h{display:block;font-size:13px;margin-bottom:12px}
+.tiles{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.tile{height:108px;border:1px solid var(--line);border-radius:10px;padding:9px;font-size:12px;font-weight:600;transition:border-color .25s,box-shadow .25s,background .25s}
+.tile .ic{display:inline-flex;width:18px;height:18px;border-radius:5px;background:var(--chip);color:var(--sub);font-size:10px;align-items:center;justify-content:center;margin-right:5px}
+.tile .pv{height:34px;border-radius:7px;background:#f5f6f8;margin:8px 0 6px;padding:7px;display:flex;flex-direction:column;gap:5px;justify-content:center}
+.tile .pv i{display:block;height:4px;border-radius:2px;background:#dfe3e8}
+.tile small{display:block;font-size:10px;color:var(--muted);font-weight:400;line-height:1.35}
+.tile.on{border-color:var(--primary);box-shadow:0 0 0 3px var(--primary-soft);background:#fbfdff}
+.tile.on .ic{background:var(--primary);color:#fff}
+.set-row{display:flex;align-items:center;justify-content:space-between;font-size:12.5px;margin-bottom:16px}
+.set-lb{font-size:12px;color:var(--sub);margin:4px 0 8px}
+.tog{width:34px;height:20px;border-radius:10px;background:#dfe3e8;position:relative;transition:background .25s}
+.tog::after{content:"";position:absolute;left:2px;top:2px;width:16px;height:16px;border-radius:50%;background:#fff;box-shadow:0 1px 2px rgba(0,0,0,.2);transition:transform .25s}
+.tog.on{background:var(--primary)}
+.tog.on::after{transform:translateX(14px)}
+.seg{display:flex;background:var(--chip);border-radius:9px;padding:3px}
+.seg span{flex:1;height:30px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:12px;color:var(--sub);transition:all .25s}
+.seg span.on{background:#fff;color:var(--primary);font-weight:700;box-shadow:0 1px 3px rgba(0,0,0,.08)}
+
+/* ---------- scene 2: structure & logic ---------- */
+.cv-lines{position:absolute;inset:0;pointer-events:none;overflow:visible}
+.vline{position:absolute;left:149px;width:1.5px;background:#b8bec8}
+.vline::after{content:"";position:absolute;left:-3.5px;bottom:-1px;border:4px solid transparent;border-top:5px solid #b8bec8;border-bottom:0}
+.node{position:absolute;left:40px;width:220px;height:38px;background:#fff;border:1px solid var(--line);border-radius:9px;display:flex;align-items:center;gap:8px;padding:0 12px;font-size:12.5px;color:#2b3038;white-space:nowrap;box-shadow:0 1px 2px rgba(0,0,0,.03);
+  transition:top .7s cubic-bezier(.45,.05,.25,1),box-shadow .25s,border-color .25s,transform .25s}
+.node .q{color:var(--primary);font-weight:700;font-size:11.5px;min-width:18px}
+.node .ti{width:20px;height:20px;border-radius:5px;background:var(--chip);font-size:10px;display:inline-flex;align-items:center;justify-content:center;color:var(--sub)}
+.node.start{left:100px;width:100px;background:var(--primary);color:#fff;border-color:var(--primary);justify-content:center;font-weight:700}
+.node.end{border-style:dashed;color:var(--sub);justify-content:center;flex-direction:column;gap:0;line-height:1.25}
+.node.end small{font-size:9.5px;color:var(--muted)}
+.node.lift{box-shadow:0 14px 28px rgba(10,40,90,.18);transform:scale(1.03) rotate(-.6deg);border-color:var(--primary-line);z-index:5}
+.node.sel{border-color:var(--primary);box-shadow:0 0 0 3px var(--primary-soft)}
+.node.hit{border-color:#e5484d;border-style:solid;color:#e5484d;box-shadow:0 0 0 3px #fdecec}
+.handle{position:absolute;right:-8px;top:50%;width:16px;height:16px;margin-top:-8px;border-radius:50%;background:var(--primary);color:#fff;font-size:12px;line-height:15px;text-align:center;opacity:0;transform:scale(.5);transition:all .25s}
+.node.sel .handle{opacity:1;transform:none}
+.dropline{position:absolute;left:36px;width:228px;height:2px;background:var(--primary);border-radius:1px;opacity:0;transition:opacity .2s}
+.dropline::before,.dropline::after{content:"";position:absolute;top:-3px;width:8px;height:8px;border-radius:50%;background:var(--primary)}
+.dropline::before{left:-4px}.dropline::after{right:-4px}
+.dropline.show{opacity:1}
+.branch{fill:none;stroke:#e5484d;stroke-width:1.8;stroke-dasharray:240;stroke-dashoffset:240;transition:stroke-dashoffset .9s ease}
+.branch.draw{stroke-dashoffset:0}
+.arrowhead{fill:#e5484d;opacity:0;transition:opacity .2s .8s}
+.arrowhead.draw{opacity:1}
+.lbl{position:absolute;height:20px;padding:0 8px;border-radius:10px;font-size:10.5px;font-weight:700;display:flex;align-items:center;opacity:0;transform:scale(.6);transition:all .3s cubic-bezier(.3,.9,.3,1.4)}
+.lbl.show{opacity:1;transform:none}
+.lbl.no{background:#fdecec;color:#e5484d}
+.lbl.yes{background:#e9f7ef;color:#1d8a55}
+.lp{position:absolute;left:444px;top:16px;width:236px;height:308px;background:#fff;border:1px solid var(--line);border-radius:14px;padding:14px}
+.lp-empty{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;color:var(--muted);font-size:12px;padding:20px;transition:opacity .3s}
+.lp-body{opacity:0;transition:opacity .3s}
+.lp.on .lp-empty{opacity:0}
+.lp.on .lp-body{opacity:1}
+.lp-h{font-size:11px;color:var(--muted);margin-bottom:4px}
+.lp-t{font-size:13px;font-weight:700;margin-bottom:14px}
+.add-cond{height:34px;border:1.5px dashed var(--primary-line);border-radius:9px;color:var(--primary);font-size:12px;font-weight:600;display:flex;align-items:center;justify-content:center;transition:opacity .25s}
+.cond{border:1px solid var(--line);border-radius:10px;padding:10px;font-size:11.5px;color:var(--sub);display:none}
+.cond.show{display:block;animation:optin .35s}
+.cond-row{display:flex;align-items:center;gap:6px;margin-bottom:8px}
+.cond-row:last-child{margin-bottom:0}
+.sel-box{flex:1;height:30px;border:1px solid var(--line);border-radius:7px;display:flex;align-items:center;justify-content:space-between;padding:0 9px;font-size:12px;color:var(--muted);transition:all .25s}
+.sel-box::after{content:"▾";font-size:10px;color:var(--muted)}
+.sel-box.set{color:var(--text);font-weight:600;border-color:var(--primary-line);background:#fbfdff}
+.sel-box.flash{box-shadow:0 0 0 3px var(--primary-soft)}
+.cond-k{width:34px;flex:none;font-weight:600;color:#3b424c}
+
+/* ---------- scene 3: branding ---------- */
+.bp{position:absolute;left:16px;top:16px;width:250px;height:308px;background:#fff;border:1px solid var(--line);border-radius:14px;padding:14px 16px}
+.bp-sec{margin-bottom:16px}
+.bp-h{display:flex;align-items:center;gap:6px;font-size:12.5px;font-weight:700;margin-bottom:10px}
+.bp-h i{width:18px;height:18px;border-radius:5px;background:var(--chip);font-style:normal;font-size:10px;display:inline-flex;align-items:center;justify-content:center;color:var(--sub)}
+.sws{display:flex;gap:9px}
+.sw{width:26px;height:26px;border-radius:50%;position:relative;transition:box-shadow .25s}
+.sw.on{box-shadow:0 0 0 2px #fff,0 0 0 4px currentColor}
+.fonts{display:flex;gap:6px}
+.fonts span{flex:1;height:44px;border:1px solid var(--line);border-radius:9px;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:15px;line-height:1.1;transition:all .25s}
+.fonts span small{font-size:9.5px;color:var(--muted);font-family:var(--sans);margin-top:3px}
+.fonts span.on{border-color:var(--primary);box-shadow:0 0 0 3px var(--primary-soft)}
+.shapes{display:flex;gap:6px}
+.shapes span{flex:1;height:48px;border:1px solid var(--line);border-radius:9px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;font-size:9.5px;color:var(--muted);transition:all .25s}
+.shapes span i{width:38px;height:13px;background:#c9ced6}
+.shapes span.on{border-color:var(--primary);box-shadow:0 0 0 3px var(--primary-soft)}
+.pvw{position:absolute;left:286px;top:16px;width:394px;height:308px;border-radius:14px;background:#eef1f5;display:flex;align-items:center;justify-content:center}
+.pv-card{--acc:#0a6cff;--accs:#eaf2ff;--r:9px;--ff:var(--sans);width:310px;background:#fff;border-radius:14px;padding:20px 20px 18px;box-shadow:0 6px 20px rgba(20,30,50,.08);font-family:var(--ff)}
+.pv-bar{height:4px;border-radius:2px;background:#eef0f3;margin-bottom:16px;overflow:hidden}
+.pv-bar i{display:block;height:100%;width:40%;background:var(--acc);transition:background .5s}
+.pv-q{font-size:16px;font-weight:700;margin-bottom:12px;transition:font-family .2s}
+.pv-opt{height:34px;border:1px solid #e3e6ea;border-radius:var(--r);display:flex;align-items:center;gap:9px;padding:0 12px;font-size:12.5px;margin-bottom:7px;transition:border-radius .45s,border-color .5s,background .5s}
+.pv-opt b{width:12px;height:12px;border-radius:50%;border:1.5px solid #c4c9d1;transition:all .5s}
+.pv-opt.sel{border-color:var(--acc);background:var(--accs)}
+.pv-opt.sel b{border:3.5px solid var(--acc)}
+.pv-btn{height:38px;margin-top:12px;border-radius:var(--r);background:var(--acc);color:#fff;font-weight:700;font-size:13px;display:flex;align-items:center;justify-content:center;transition:border-radius .45s,background .5s,transform .15s}
+.pv-btn.press{transform:scale(.97)}
+
+@media (prefers-reduced-motion: reduce){*,*::before,*::after{transition:none!important;animation:none!important}}
+/* embedded in the creation demo: no background editor or demo bar, the host page draws the dim */
+html.embed,html.embed body{background:transparent}
+html.embed .app{min-width:0}
+html.embed .demo-bar,html.embed .ed-head,html.embed .ed-body{display:none}
+html.embed .ob-layer{top:0;background:transparent;backdrop-filter:none}
+</style>
+</head>
+<body>
+<div class="app-scroll"><div class="app ob-open" id="app">
+  <div class="demo-bar"><span>왈라 제작 흐름 데모 · 첫 진입 온보딩</span><button id="reopen" hidden>온보딩 다시 보기</button></div>
+
+  <!-- background: the editor right after picking '새로 만들기' -->
+  <header class="ed-head">
+    <div></div>
+    <nav class="eh-steps" id="bgSteps">
+      <span class="st on" data-st="1"><span class="st-n">1</span>문항 생성 및 편집</span><span class="st-line"></span>
+      <span class="st" data-st="2"><span class="st-n">2</span>구조화</span><span class="st-line"></span>
+      <span class="st" data-st="3"><span class="st-n">3</span>브랜딩</span>
+    </nav>
+    <div class="eh-right"><button class="tb">미리보기</button><button class="tb">임시저장</button><button class="tb pub">게시하기</button></div>
+  </header>
+  <div class="ed-body" id="bgBody">
+    <aside class="panel"><h4>설문 필드</h4><div class="empty">아직 문항이 없어요</div></aside>
+    <section class="center">
+      <div class="c-title">제목<br>설명을 적어주세요</div>
+      <div class="c-ph">오른쪽에서 문항 유형을 골라주세요</div>
+    </section>
+    <aside class="panel"><h4>첫 문항 유형 선택</h4><div class="bg-search">문항 유형 검색 (예: 다중선택, 선형배율)</div>
+      <div class="bg-tiles"><div class="bg-tile">객관식<i></i></div><div class="bg-tile">주관식<i></i></div><div class="bg-tile">척도<i></i></div><div class="bg-tile">드롭다운<i></i></div></div>
+    </aside>
+  </div>
+
+  <!-- onboarding -->
+  <div class="ob-layer" id="layer">
+    <div class="ob" role="dialog" aria-modal="true" aria-labelledby="obTitle">
+      <div class="stage" id="stage" aria-hidden="true">
+        <div class="scene" id="scene"></div>
+        <div class="cursor off" id="cursor"><svg width="22" height="24" viewBox="0 0 22 24"><path d="M3 2l15 11.2-6.6.9 3.8 7.4-3 1.5-3.8-7.5L3 20z" fill="#1f2329" stroke="#fff" stroke-width="1.6" stroke-linejoin="round"/></svg></div>
+      </div>
+      <div class="ob-text" id="obText"></div>
+      <div class="ob-foot">
+        <div><button class="btn line" id="prev">← 이전</button></div>
+        <div class="dots" id="dots" role="tablist" aria-label="온보딩 단계"></div>
+        <div class="foot-r"><button class="btn ghost" id="skip">건너뛰기</button><button class="btn primary" id="next">다음 →</button></div>
+      </div>
+    </div>
+  </div>
+</div></div>
+
+<script>
+const $ = s => document.querySelector(s);
+const EMBED = new URLSearchParams(location.search).has('embed') && window.parent !== window;
+if (EMBED) document.documentElement.classList.add('embed');
+const toHost = msg => window.parent.postMessage({walla: 'onboarding', ...msg}, '*');
+
+/* ---------- event log: each entry also goes to Amplitude, with demo 'onboarding' ---------- */
+const LOG = [];
+let t0 = null, openedAt = 0, slideAt = 0;
+function log(ev, detail = ''){
+  const now = new Date();
+  if (!t0) t0 = now;
+  const el = (now - t0) / 1000;
+  LOG.push({ev, detail, t: now, el});
+  if (EMBED) toHost({type: 'event', ev, detail});
+  else ampTrack(ev, {detail, elapsed_sec: Math.round(el * 10) / 10, demo: 'onboarding'});
+}
+const secs = from => ((performance.now() - from) / 1000).toFixed(1);
+const slideName = i => `${i + 1}/${SLIDES.length} ${SLIDES[i].title}`;
+const STAGE = $('#stage'), SCENE = $('#scene'), CUR = $('#cursor');
+const RM = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+/* ---------- tiny timeline engine: every wait belongs to one run; changing slides cancels the old run ---------- */
+let run = 0;
+class Cancel {}
+const wait = ms => { const id = run; return new Promise((ok, no) => setTimeout(() => id === run ? ok() : no(new Cancel), RM ? 0 : ms)); };
+const q = s => SCENE.querySelector(s);
+function pos(el, fx = .5, fy = .5){
+  let x = 0, y = 0, n = el;
+  while (n && n !== STAGE){ x += n.offsetLeft; y += n.offsetTop; n = n.offsetParent; }
+  return [x + el.offsetWidth * fx, y + el.offsetHeight * fy];
+}
+function cursorAt(x, y, ms){ CUR.style.transitionDuration = ms + 'ms'; CUR.style.transform = `translate(${x}px,${y}px)`; }
+async function moveXY(x, y, ms = 700){ cursorAt(x, y, ms); await wait(ms + 60); }
+async function moveTo(el, fx = .5, fy = .55, ms = 700){ const [x, y] = pos(el, fx, fy); await moveXY(x, y, ms); }
+async function click(){ CUR.classList.remove('clk'); void CUR.offsetWidth; CUR.classList.add('clk', 'down'); await wait(140); CUR.classList.remove('down'); await wait(140); }
+async function type(el, text, ms = 55){ for (const ch of text){ el.textContent += ch; await wait(ms); } }
+function beat(i){ document.querySelectorAll('.beat').forEach((b, k) => { b.classList.toggle('on', k === i); b.classList.toggle('done', k < i); }); }
+
+/* ---------- the four slides ---------- */
+const SLIDES = [
+{
+  eyebrow: '설문 제작 가이드', title: '설문은 세 단계로 만들어요',
+  desc: '문항 생성 및 편집 → 구조화 → 브랜딩 순서로 진행돼요. 상단 단계 바에서 언제든 이전 단계로 돌아가 수정할 수 있어요.',
+  beats: ['문항 생성 및 편집', '구조화', '브랜딩'], arrows: true, step: 0, dur: 6600, cursor: false,
+  html: () => `<div class="ov">
+    ${[['문항 생성 및 편집', `<span class="mini-chip">☰ 객관식 ▾</span><div class="mini-q">가장 자주 쓰는 AI 서비스는?</div>
+        <div class="mini-opt sel"><b></b>ChatGPT</div><div class="mini-opt"><b></b>Claude</div><div class="mini-opt"><b></b>Gemini</div>`],
+       ['구조화', `<div class="mini-node start" style="left:58px;top:14px;width:78px">시작</div>
+        <div class="mini-node" style="left:14px;top:56px;width:120px"><b>Q1</b>사용 경험</div>
+        <div class="mini-node" style="left:14px;top:98px;width:120px"><b>Q2</b>주로 쓰는 서비스</div>
+        <div class="mini-node end" style="left:14px;top:150px;width:120px;justify-content:center">응답 완료</div>
+        <div class="mini-node end" style="left:118px;top:150px;width:60px;border-color:#e5484d;color:#e5484d;justify-content:center">종료</div>
+        <svg width="196" height="210" style="position:absolute;left:0;top:0"><path d="M74 38v18M74 80v18M74 122v28" stroke="#b8bec8" stroke-width="1.4"/><path d="M134 68c22 0 14 40 14 82" stroke="#e5484d" stroke-width="1.4" fill="none"/></svg>`],
+       ['브랜딩', `<div class="mini-sw"><i style="background:#0a6cff"></i><i style="background:#1d9a6c;box-shadow:0 0 0 2px #fff,0 0 0 3.5px #1d9a6c"></i><i style="background:#7c5cff"></i><i style="background:#f08c2e"></i></div>
+        <div class="mini-prev" style="font-family:'Noto Serif KR',serif"><div style="font-size:12px;font-weight:700;margin-bottom:6px">직무를 알려주세요</div>
+        <div class="mini-opt sel" style="border-radius:11px;background:#e8f6f0"><b style="border-color:#1d9a6c;background:#1d9a6c"></b>디자이너</div><div class="mini-btn">다음</div></div>`]
+      ].map(([t, inner], i) => `<div class="ov-col" data-i="${i}"><div class="ov-step"><span class="ov-n">${i + 1}</span>${t}</div><div class="ov-card">${inner}</div></div>`).join('')}
+    </div>
+    <div class="ov-link" style="left:236px"><i></i></div><div class="ov-link" style="left:458px"><i></i></div>`,
+  async play(){
+    const cols = SCENE.querySelectorAll('.ov-col'), links = SCENE.querySelectorAll('.ov-link');
+    await wait(400);
+    for (let i = 0; i < 3; i++){
+      beat(i);
+      if (i) { cols[i - 1].classList.replace('on', 'done'); cols[i - 1].querySelector('.ov-n').textContent = '✓'; links[i - 1].classList.add('on'); await wait(450); }
+      cols[i].classList.add('on');
+      await wait(1500);
+    }
+    cols[2].classList.replace('on', 'done'); cols[2].querySelector('.ov-n').textContent = '✓';
+    beat(3);
+  }
+},
+{
+  eyebrow: 'STEP 1 · 문항 생성 및 편집', title: '문항 유형을 고르고 바로 작성해요',
+  desc: '문항 유형을 정해 질문을 작성하고, 선택지 추가·필수 응답·선택 개수 같은 옵션을 설정할 수 있어요.',
+  beats: ['유형 선택', '문항 작성', '옵션 설정'], step: 1, dur: 12800, cursor: true,
+  html: () => `<div class="qcard" id="qc"><div class="qc-empty">오른쪽에서 문항 유형을 골라주세요</div>
+      <div class="qc-body"><div class="qc-top"><span class="qn">Q1</span><span class="qtype">☰ 객관식 ▾</span><span class="badge req">필수</span><span class="badge multi">복수 선택</span></div>
+        <div class="qc-title"><span id="qt"></span><i class="caret"></i></div><div class="qc-desc">설명을 입력해주세요</div>
+        <div class="opts" id="opts"></div>
+        <div class="qc-add"><span id="addOpt">⊕ 선택지 추가</span><span>☰ 일괄 추가</span><span>⊕ 기타 추가</span></div></div></div>
+    <div class="rp">
+      <div class="rp-layer show" id="rpTypes"><b class="h">첫 문항 유형 선택</b><div class="tiles">
+        <div class="tile" id="tChoice"><span class="ic">☰</span>객관식<div class="pv"><i style="width:80%"></i><i style="width:60%"></i></div><small>보기 중에서 골라요</small></div>
+        <div class="tile"><span class="ic">¶</span>주관식<div class="pv"><i style="width:90%;height:10px;background:#fff;border:1px solid #e6e8ec"></i></div><small>글로 자유롭게 답해요</small></div>
+        <div class="tile"><span class="ic">⋯</span>척도<div class="pv" style="flex-direction:row;align-items:center;justify-content:space-around">${'<i style="width:8px;height:8px;border-radius:50%"></i>'.repeat(5)}</div><small>점수로 답해요</small></div>
+        <div class="tile"><span class="ic">▾</span>드롭다운<div class="pv"><i style="width:90%;height:10px;background:#fff;border:1px solid #e6e8ec"></i></div><small>목록에서 골라요</small></div>
+      </div></div>
+      <div class="rp-layer" id="rpSet"><b class="h">문항 설정</b>
+        <div class="set-row">필수 응답<span class="tog" id="tog"></span></div>
+        <div class="set-lb">선택 개수</div><div class="seg"><span class="on">하나만</span><span id="segMulti">여러 개</span></div>
+        <div class="set-lb" style="margin-top:16px">보기 형태</div><div class="seg"><span class="on">텍스트</span><span>사진</span></div>
+      </div>
+    </div>`,
+  async play(){
+    const opts = q('#opts');
+    const addOpt = async text => { const o = document.createElement('div'); o.className = 'opt'; o.innerHTML = '<b></b><span></span>'; opts.appendChild(o); await type(o.lastChild, text, 45); };
+    beat(0); await wait(500);
+    await moveTo(q('#tChoice'), .45, .4); await click(); q('#tChoice').classList.add('on'); await wait(350);
+    q('#qc').classList.add('filled'); await wait(600);
+
+    beat(1);
+    await moveTo(q('.qc-title'), .08, .6); await click(); q('.caret').classList.add('on');
+    await type(q('#qt'), '가장 자주 쓰는 AI 서비스는?'); q('.caret').classList.remove('on'); await wait(250);
+    await addOpt('ChatGPT'); await wait(150); await addOpt('Claude'); await wait(600);
+
+    beat(2);
+    q('#rpTypes').classList.remove('show'); q('#rpSet').classList.add('show');
+    await moveTo(q('#addOpt'), .4); await click(); await addOpt('Gemini'); await wait(300);
+    await moveTo(q('#tog')); await click(); q('#tog').classList.add('on'); q('.badge.req').classList.add('show'); await wait(400);
+    await moveTo(q('#segMulti')); await click();
+    q('#segMulti').classList.add('on'); q('#segMulti').previousElementSibling.classList.remove('on');
+    q('.badge.multi').classList.add('show'); opts.classList.add('multi');
+  }
+},
+{
+  eyebrow: 'STEP 2 · 구조화', title: '문항 순서와 응답 흐름을 정리해요',
+  desc: '드래그로 문항 순서를 바꾸고, 로직 조건을 설정해 응답에 따라 다른 문항이나 엔딩으로 분기할 수 있어요.',
+  beats: ['드래그로 순서 변경', '로직 조건 설정', '조건 분기'], step: 2, dur: 11800, cursor: true,
+  html: () => {
+    const Y = [74, 132, 190];
+    return `<div class="vline" style="top:54px;height:20px"></div><div class="vline" style="top:112px;height:20px"></div>
+      <div class="vline" style="top:170px;height:20px"></div><div class="vline" style="top:228px;height:28px"></div>
+      <span class="lbl yes" id="lYes" style="left:158px;top:110px">예</span>
+      <div class="node start" style="top:16px">시작</div>
+      <div class="node" id="n1" style="top:${Y[0]}px"><span class="q">Q1</span><span class="ti">☰</span>AI 서비스를 써 봤나요?<span class="handle">+</span></div>
+      <div class="node" id="nA" style="top:${Y[1]}px"><span class="q">Q2</span><span class="ti">⋯</span>만족도</div>
+      <div class="node" id="nB" style="top:${Y[2]}px"><span class="q">Q3</span><span class="ti">☰</span>주로 쓰는 서비스</div>
+      <div class="dropline" id="drop" style="top:126px"></div>
+      <div class="node end" style="top:256px;left:80px;width:140px">응답 완료<small>응답을 저장하고 끝</small></div>
+      <div class="node end" id="nEnd" style="top:256px;left:296px;width:120px">설문 종료<small>응답 받지 않고 끝</small></div>
+      <svg class="cv-lines" width="440" height="340"><path class="branch" id="br" d="M260 93 C 340 93, 356 150, 356 252"/><path class="arrowhead" id="ah" d="M351.5 246 L356 255 L360.5 246z"/></svg>
+      <span class="lbl no" id="lNo" style="left:318px;top:118px">아니오</span>
+      <div class="lp" id="lp"><div class="lp-empty">문항을 선택해주세요<br>캔버스에서 문항을 누르면<br>다음에 갈 곳을 정할 수 있어요</div>
+        <div class="lp-body"><div class="lp-h">로직 설정</div><div class="lp-t">Q1 · AI 서비스를 써 봤나요?</div>
+          <div class="add-cond" id="addCond">+ 조건 추가</div>
+          <div class="cond" id="cond"><div class="cond-row"><span class="cond-k">만약</span><span class="sel-box" id="sAns">답변 선택</span></div>
+            <div class="cond-row"><span class="cond-k">이동</span><span class="sel-box" id="sGo">이동할 곳</span></div></div>
+        </div></div>`;
+  },
+  async play(){
+    const nA = q('#nA'), nB = q('#nB');
+    beat(0); await wait(500);
+    await moveTo(nB, .3, .5); CUR.classList.add('down'); nB.classList.add('lift'); await wait(250);
+    // drag 'Q3' up one slot; 'Q2' slides down to make room
+    const [x, y] = pos(nB, .3, .5);
+    q('#drop').classList.add('show');
+    nB.style.top = '132px'; nA.style.top = '190px';
+    await moveXY(x, y - 58, 700);
+    q('#drop').classList.remove('show'); CUR.classList.remove('down'); nB.classList.remove('lift');
+    nB.querySelector('.q').textContent = 'Q2'; nA.querySelector('.q').textContent = 'Q3';
+    await wait(700);
+
+    beat(1);
+    await moveTo(q('#n1'), .5); await click(); q('#n1').classList.add('sel'); q('#lp').classList.add('on'); await wait(500);
+    await moveTo(q('#addCond')); await click(); q('#addCond').style.display = 'none'; q('#cond').classList.add('show'); await wait(350);
+    await moveTo(q('#sAns'), .6); await click(); q('#sAns').classList.add('flash'); await wait(200);
+    q('#sAns').textContent = "'아니오'를 선택하면"; q('#sAns').classList.replace('flash', 'set'); await wait(350);
+    await moveTo(q('#sGo'), .6); await click(); q('#sGo').classList.add('flash'); await wait(200);
+    q('#sGo').textContent = '설문 종료'; q('#sGo').classList.replace('flash', 'set'); await wait(300);
+
+    beat(2);
+    q('#br').classList.add('draw'); q('#ah').classList.add('draw');
+    await moveXY(560, 300, 900);
+    q('#lNo').classList.add('show'); q('#lYes').classList.add('show'); q('#nEnd').classList.add('hit');
+  }
+},
+{
+  eyebrow: 'STEP 3 · 브랜딩', title: '브랜드에 맞게 설문을 꾸며요',
+  desc: '컬러, 타이포, 버튼 디자인을 설정하면 오른쪽 미리보기에 바로 반영돼요. 응답자가 보게 될 화면을 확인하며 다듬어 보세요.',
+  beats: ['컬러', '타이포', '버튼'], step: 3, dur: 9400, cursor: true,
+  html: () => `<div class="bp">
+      <div class="bp-sec"><div class="bp-h"><i>●</i>강조 컬러</div><div class="sws">
+        ${[['#0a6cff', 1], ['#1d9a6c'], ['#7c5cff'], ['#f08c2e'], ['#1f2329']].map(([c, on], i) => `<span class="sw${on ? ' on' : ''}" data-c="${c}" style="background:${c};color:${c}" id="sw${i}"></span>`).join('')}</div></div>
+      <div class="bp-sec"><div class="bp-h"><i>Aa</i>글꼴</div><div class="fonts">
+        <span class="on" style="font-family:var(--sans);font-weight:700">가<small>고딕</small></span>
+        <span id="fSerif" style="font-family:'Noto Serif KR',serif;font-weight:700">가<small>명조</small></span>
+        <span style="font-family:'Gowun Dodum',sans-serif">가<small>둥근</small></span></div></div>
+      <div class="bp-sec"><div class="bp-h"><i>▭</i>버튼 모양</div><div class="shapes">
+        <span class="on"><i style="border-radius:3px"></i>둥근 모서리</span><span><i style="border-radius:0"></i>각진</span><span id="shPill"><i style="border-radius:7px"></i>캡슐</span></div></div>
+    </div>
+    <div class="pvw"><div class="pv-card" id="pv"><div class="pv-bar"><i></i></div>
+      <div class="pv-q">현재 직무를 알려주세요</div>
+      <div class="pv-opt sel"><b></b>디자이너</div><div class="pv-opt"><b></b>개발자</div><div class="pv-opt"><b></b>기획·PM</div>
+      <div class="pv-btn" id="pvBtn">다음</div></div></div>`,
+  async play(){
+    const pv = q('#pv');
+    beat(0); await wait(500);
+    await moveTo(q('#sw1')); await click();
+    q('#sw0').classList.remove('on'); q('#sw1').classList.add('on');
+    pv.style.setProperty('--acc', '#1d9a6c'); pv.style.setProperty('--accs', '#e8f6f0'); await wait(1000);
+
+    beat(1);
+    await moveTo(q('#fSerif')); await click();
+    q('.fonts .on').classList.remove('on'); q('#fSerif').classList.add('on');
+    pv.style.setProperty('--ff', "'Noto Serif KR',serif"); await wait(1000);
+
+    beat(2);
+    await moveTo(q('#shPill')); await click();
+    q('.shapes .on').classList.remove('on'); q('#shPill').classList.add('on');
+    pv.style.setProperty('--r', '19px'); await wait(800);
+    await moveTo(q('#pvBtn'), .55); await click(); q('#pvBtn').classList.add('press'); await wait(160); q('#pvBtn').classList.remove('press');
+  }
+}];
+
+/* ---------- slide control ---------- */
+let cur = 0;
+const dots = $('#dots');
+dots.innerHTML = SLIDES.map((s, i) => `<button class="dot" role="tab" aria-label="${i + 1}번째: ${s.title}" data-i="${i}"><i></i></button>`).join('');
+dots.addEventListener('click', e => { const b = e.target.closest('.dot'); if (b && +b.dataset.i !== cur) go(+b.dataset.i, '점 클릭'); });
+
+function renderText(s){
+  const el = $('#obText');
+  el.innerHTML = `<div class="eyebrow">${s.eyebrow}</div><h2 id="obTitle">${s.title}</h2><p>${s.desc}</p>
+    <div class="beats">${s.beats.map((b, i) => `${i && s.arrows ? '<span class="beat-arrow">→</span>' : ''}<span class="beat"><b>${i + 1}</b>${b}</span>`).join('')}</div>`;
+  el.classList.remove('swap'); void el.offsetWidth; el.classList.add('swap');
+}
+function restartFill(ms){
+  const d = dots.children[cur];
+  d.style.setProperty('--fill', 'none'); void d.offsetWidth;
+  d.style.setProperty('--fill', RM ? 'none' : `fill ${ms}ms linear forwards`);
+  if (RM) d.querySelector('i').style.width = '100%';
+}
+async function loop(i){
+  const s = SLIDES[i];
+  let first = true;
+  try {
+    do {
+      SCENE.innerHTML = s.html();
+      CUR.classList.toggle('off', !s.cursor);
+      cursorAt(620, 300, 0);
+      restartFill(s.dur);
+      const t0 = performance.now();
+      await s.play();
+      if (first){ first = false; log('onboarding_slide_watched', `${slideName(i)} · 애니메이션 끝까지 봄`); }
+      const left = s.dur - (performance.now() - t0);
+      await wait(Math.max(left, 0) + 300);
+    } while (!RM);
+  } catch (e){ if (!(e instanceof Cancel)) throw e; }
+}
+function go(i, via = ''){
+  if (i < 0 || i >= SLIDES.length) return;
+  if (via) log('onboarding_slide_view', `${slideName(i)} · ${via}`);
+  run++; cur = i; slideAt = performance.now();
+  const s = SLIDES[i];
+  [...dots.children].forEach((d, k) => { d.classList.toggle('on', k === i); d.classList.toggle('seen', k < i); d.setAttribute('aria-selected', k === i); d.querySelector('i').style.width = ''; });
+  $('#prev').style.visibility = i ? 'visible' : 'hidden';
+  const last = i === SLIDES.length - 1;
+  $('#next').textContent = last ? '설문 만들기 시작' : '다음 →';
+  $('#skip').hidden = last;
+  // the real step bar above the overlay lights the step this slide is about
+  document.querySelectorAll('#bgSteps .st').forEach(st => st.classList.toggle('spot', +st.dataset.st === s.step));
+  renderText(s);
+  loop(i);
+}
+function close(how){
+  if (how === 'done') log('onboarding_completed', `전체 ${secs(openedAt)}초`);
+  else log('onboarding_skipped', `${slideName(cur)}에서 · ${how} · 이 슬라이드 ${secs(slideAt)}초 · 전체 ${secs(openedAt)}초`);
+  run++;
+  $('#layer').classList.add('hide');
+  $('#app').classList.remove('ob-open');
+  document.querySelectorAll('#bgSteps .st').forEach(st => st.classList.remove('spot'));
+  $('#reopen').hidden = false;
+  if (EMBED) toHost({type: 'close', how});
+}
+function open(how = '처음 진입'){
+  openedAt = performance.now();
+  log(how === '다시 보기' ? 'onboarding_reopened' : 'onboarding_opened', how);
+  $('#layer').classList.remove('hide');
+  $('#app').classList.add('ob-open');
+  $('#reopen').hidden = true;
+  const ob = $('.ob'); ob.style.animation = 'none'; void ob.offsetWidth; ob.style.animation = '';
+  go(0, '시작');
+}
+$('#next').addEventListener('click', () => cur === SLIDES.length - 1 ? close('done') : go(cur + 1, '다음 버튼'));
+$('#prev').addEventListener('click', () => go(cur - 1, '이전 버튼'));
+$('#skip').addEventListener('click', () => close('건너뛰기 버튼'));
+$('#reopen').addEventListener('click', () => open('다시 보기'));
+document.addEventListener('keydown', e => {
+  if ($('#layer').classList.contains('hide')) return;
+  if (e.key === 'ArrowRight') go(cur + 1, '→ 키');
+  else if (e.key === 'ArrowLeft') go(cur - 1, '← 키');
+  else if (e.key === 'Escape') close('Esc 키');
+});
+// opened inside the creation demo (?embed): no code dialog, no Amplitude of its own; that page dims its screen and logs for us.
+// on its own: the participant code comes first, and the onboarding stays hidden until it is in
+if (EMBED) open('제작 데모에서 새 프로젝트');
+else {
+  $('#layer').classList.add('hide');
+  askParticipant(() => open());
+}
+</script>
+</body>
+</html>

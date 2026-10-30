@@ -352,6 +352,11 @@ button:focus-visible{outline:2px solid var(--primary);outline-offset:2px}
 .pv-btn.press{transform:scale(.97)}
 
 @media (prefers-reduced-motion: reduce){*,*::before,*::after{transition:none!important;animation:none!important}}
+/* embedded in the creation demo: no background editor or demo bar, the host page draws the dim */
+html.embed,html.embed body{background:transparent}
+html.embed .app{min-width:0}
+html.embed .demo-bar,html.embed .ed-head,html.embed .ed-body{display:none}
+html.embed .ob-layer{top:0;background:transparent;backdrop-filter:none}
 </style>
 </head>
 <body>
@@ -398,6 +403,9 @@ button:focus-visible{outline:2px solid var(--primary);outline-offset:2px}
 
 <script>
 const $ = s => document.querySelector(s);
+const EMBED = new URLSearchParams(location.search).has('embed') && window.parent !== window;
+if (EMBED) document.documentElement.classList.add('embed');
+const toHost = msg => window.parent.postMessage({walla: 'onboarding', ...msg}, '*');
 
 /* ---------- event log: each entry also goes to Amplitude, with demo 'onboarding' ---------- */
 const LOG = [];
@@ -407,7 +415,8 @@ function log(ev, detail = ''){
   if (!t0) t0 = now;
   const el = (now - t0) / 1000;
   LOG.push({ev, detail, t: now, el});
-  ampTrack(ev, {detail, elapsed_sec: Math.round(el * 10) / 10, demo: 'onboarding'});
+  if (EMBED) toHost({type: 'event', ev, detail});
+  else ampTrack(ev, {detail, elapsed_sec: Math.round(el * 10) / 10, demo: 'onboarding'});
 }
 const secs = from => ((performance.now() - from) / 1000).toFixed(1);
 const slideName = i => `${i + 1}/${SLIDES.length} ${SLIDES[i].title}`;
@@ -656,6 +665,7 @@ function close(how){
   $('#app').classList.remove('ob-open');
   document.querySelectorAll('#bgSteps .st').forEach(st => st.classList.remove('spot'));
   $('#reopen').hidden = false;
+  if (EMBED) toHost({type: 'close', how});
 }
 function open(how = '처음 진입'){
   openedAt = performance.now();
@@ -676,9 +686,13 @@ document.addEventListener('keydown', e => {
   else if (e.key === 'ArrowLeft') go(cur - 1, '← 키');
   else if (e.key === 'Escape') close('Esc 키');
 });
-// the participant code comes first; the onboarding stays hidden until it is in
-$('#layer').classList.add('hide');
-askParticipant(() => open());
+// opened inside the creation demo (?embed): no code dialog, no Amplitude of its own; that page dims its screen and logs for us.
+// on its own: the participant code comes first, and the onboarding stays hidden until it is in
+if (EMBED) open('제작 데모에서 새 프로젝트');
+else {
+  $('#layer').classList.add('hide');
+  askParticipant(() => open());
+}
 </script>
 </body>
 </html>
