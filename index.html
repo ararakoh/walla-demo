@@ -228,6 +228,9 @@ button.pcard:hover{border-color:var(--primary-line);box-shadow:0 2px 8px rgba(20
 .ib:hover{background:var(--chip)}
 .ib.box{background:var(--chip)}
 .ib.box:hover{background:#e6e9ee}
+/* grey text buttons in the editor header (임시저장, 미리보기) */
+.tb{height:38px;padding:0 14px;border-radius:10px;background:var(--chip);color:#4a525d;font-size:13.5px;font-weight:600;white-space:nowrap;flex:none}
+.tb:hover{background:#e6e9ee;color:var(--text)}
 .eh-div{width:1px;height:24px;background:var(--line);margin:0 6px}
 .eh-right .btn.primary,.eh-right .pub-done{height:38px;padding:0 18px;border-radius:10px;font-weight:700;margin-left:4px}
 .avatar{width:32px;height:32px;border-radius:50%;background:#7c4fc4;color:#fff;font-size:13px;font-weight:700;display:flex;align-items:center;justify-content:center;margin-left:6px;flex:none}
@@ -309,12 +312,16 @@ button.pcard:hover{border-color:var(--primary-line);box-shadow:0 2px 8px rgba(20
 .seg2{display:flex;background:var(--chip);border-radius:8px;padding:3px}
 .seg2 button{padding:3px 12px;border-radius:6px;font-size:13px;color:var(--muted)}
 .seg2 button.on{background:var(--surface);color:var(--text);box-shadow:0 1px 2px rgba(0,0,0,.06)}
-.cscroll{flex:1;overflow:auto;padding:22px 70px 40px 10px;scroll-behavior:smooth}
+.cscroll{flex:1;overflow:auto;padding:22px 70px 40px 70px;scroll-behavior:smooth}
 .cfoot{flex:none;display:flex;justify-content:flex-end;padding:12px 4px 0;border-top:1px solid var(--line)}
 .cfoot .btn{height:40px;padding:0 18px;font-size:14px}
 
 .ghost{max-width:680px;margin:30px auto;background:var(--surface);border:1.5px dashed var(--line);border-radius:14px;padding:40px 30px;text-align:center;color:var(--muted)}
-.ghost .ghost-line{height:14px;border-radius:7px;background:var(--chip);margin:0 auto 12px}
+/* empty editor: no skeleton, just a hint typed out one letter at a time */
+.ghost-msg{min-height:1.5em;margin:0;font-size:19px;font-weight:600;color:var(--sub);line-height:1.5}
+.ghost-msg::after{content:"";display:inline-block;width:2px;height:1.1em;margin-left:3px;vertical-align:-.15em;background:var(--primary);animation:caret 1s steps(1) infinite}
+@keyframes caret{50%{opacity:0}}
+@media (prefers-reduced-motion:reduce){.ghost-msg::after{animation:none}}
 
 .qwrap{max-width:680px;margin:0 auto 22px;position:relative}
 .cgroup{max-width:704px;margin:14px auto 22px;padding:22px 11px 2px;border:1.5px solid var(--primary-line);border-radius:16px;position:relative;background:rgba(47,124,246,.03)}
@@ -352,15 +359,36 @@ button.pcard:hover{border-color:var(--primary-line);box-shadow:0 2px 8px rgba(20
 .lsel-bar button.pri:hover{filter:brightness(1.06);background:var(--primary)}
 .lgrp{position:absolute;border:1.5px dashed #8fb3f5;border-radius:14px;background:rgba(47,124,246,.05);cursor:grab}
 .lgrp:hover{border-color:var(--primary);background:rgba(47,124,246,.08)}
+.lgrp.grp-sel{border:2px solid var(--primary)}
+.lgrp.grp-over{border:2px solid var(--primary);background:rgba(47,124,246,.12)}
 /* ungroup: an × in the top-right corner of the group box, only on hover */
 .lgrp-x{position:absolute;top:5px;right:6px;width:22px;height:22px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:15px;line-height:1;color:var(--sub);background:var(--surface);border:1px solid var(--line);opacity:0;transition:opacity .12s}
 .lgrp:hover .lgrp-x,.lgrp-x:focus-visible{opacity:1}
 .lgrp-x:hover{color:var(--danger);border-color:var(--danger)}
 .lgrp span{position:absolute;top:7px;left:12px;font-size:11.5px;font-weight:600;color:var(--primary)}
-.lpb{position:absolute;height:0;border-top:1.5px dashed #9aa3af;pointer-events:none}
-.lpb span{position:absolute;right:-4px;top:-9px;background:#f7f8fa;color:var(--sub);font-size:11px;font-weight:600;padding:0 6px;line-height:16px;border-radius:4px}
+/* the group name on the canvas is typed into directly */
+.lgrp .lgrp-name{flex:none;field-sizing:content;min-width:3em;max-width:220px;height:22px;padding:0 4px;margin-left:-4px;border:1px solid transparent;border-radius:5px;background:transparent;font:inherit;color:inherit;cursor:text;outline:none}
+.lgrp .lgrp-name:hover{border-color:var(--primary-line);background:var(--surface)}
+.lgrp .lgrp-name:focus{border-color:var(--primary);background:var(--surface)}
+.lpb{position:absolute;height:0;border-top:2px dashed #f6b27a;pointer-events:none}
+.lpb span{position:absolute;right:-4px;top:-9px;background:#fff7f0;color:#d9822b;font-size:11px;font-weight:600;padding:0 6px;line-height:16px;border-radius:4px}
+/* drag the '페이지 나눔' label to move the break to another gap */
+.lpb span{pointer-events:auto;cursor:grab;border:1px solid transparent}
+.lpb span:hover{border-color:#f6b27a;color:#c06b16}
+.lpb.pb-src{opacity:.35}
+.lpb.pb-sel{border-top-color:#e8893a}
+.lpb.pb-sel span{border-color:#e8893a;color:#c06b16;background:#ffeedd}
 .lc-tools #lGroupBtn.primary{background:var(--primary);border-color:var(--primary);color:#fff}
+/* '그룹 해제' while a group is picked: dark grey so it stands out from the other tools */
+.lc-tools #lGroupBtn.ungroup{background:#4a525d;border-color:#4a525d;color:#fff}
+.lc-tools #lGroupBtn.ungroup:hover{background:#363c45;border-color:#363c45}
 .ln.checked{outline:2px solid var(--primary);outline-offset:2px;background:var(--primary-soft)}
+/* a question dragged onto another one trades places with it */
+.lins{position:absolute;height:3px;margin-top:-1.5px;border-radius:2px;background:var(--primary);box-shadow:0 0 0 3px var(--primary-soft);pointer-events:none;z-index:6}
+.lins::before,.lins::after{content:"";position:absolute;top:-3px;width:9px;height:9px;border-radius:50%;background:var(--primary)}
+.lins::before{left:-5px}
+.lins::after{right:-5px}
+.ln.swap-over{outline:2px dashed var(--primary);outline-offset:3px;background:var(--primary-soft)}
 .ln.in-grp{border-left:4px solid var(--primary-line)}
 .qgrip{position:absolute;top:3px;left:50%;transform:translateX(-50%);z-index:2;width:44px;height:16px;border-radius:6px;display:flex;align-items:center;justify-content:center;color:var(--muted);cursor:grab;opacity:0;transition:opacity .12s}
 .qwrap:hover .qgrip,.qgrip:focus-visible{opacity:1}
@@ -418,28 +446,39 @@ button.pcard:hover{border-color:var(--primary-line);box-shadow:0 2px 8px rgba(20
 .qtitle::placeholder{color:#b8bec7;font-weight:500}
 .qdesc{width:100%;border:0;outline:none;font-size:14px;color:var(--sub);padding:2px 0 4px;background:transparent}
 .qdesc::placeholder{color:#c4c9d1}
-/* survey title + description above every question; same width as the cards, hints only on hover or focus */
-.sblock{max-width:680px;margin:0 auto 22px;padding:16px 24px;border:1px solid transparent;border-radius:14px;transition:border-color .12s,background .12s}
-.sblock:hover,.sblock:focus-within{background:var(--surface);border-color:var(--line)}
+/* survey title + description and the ending screens are always shown, hints included */
+.sblock{max-width:680px;margin:0 auto 22px;padding:16px 24px;border:1px solid var(--line);border-radius:14px;background:var(--surface);transition:border-color .12s}
+.sblock:focus-within{border-color:var(--primary-line)}
 .sblock input{display:block;width:100%;border:0;outline:none;background:transparent;font:inherit;padding:0}
 .stitle{font-size:20px;font-weight:700;color:var(--text);padding:2px 0 6px!important}
 .sdesc{font-size:14px;color:var(--sub)}
-.sblock input::placeholder{color:transparent;transition:color .12s}
-.sblock:hover input::placeholder,.sblock:focus-within input::placeholder{color:#c4c9d1}
-.ending{max-width:680px;margin:28px auto 8px;padding-top:22px;border-top:1px solid var(--line);opacity:.55;transition:opacity .15s}
-.ending:hover,.ending:focus-within{opacity:1}
+.sblock input::placeholder{color:#c4c9d1}
+.ending{max-width:680px;margin:28px auto 8px;padding-top:22px;border-top:1px solid var(--line)}
 .end-h{font-size:13px;color:var(--muted);margin-bottom:10px}
 .end-card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:16px 20px}
 .end-tag{font-size:11px;color:var(--muted);margin-bottom:8px}
 .end-title,.end-msg{display:block;width:100%;border:0;outline:none;background:transparent;font:inherit;resize:none}
 .end-title{font-size:16px;font-weight:700;padding:2px 0 6px}
 .end-msg{font-size:13.5px;color:var(--sub);line-height:1.5}
-.end-title::placeholder,.end-msg::placeholder{color:transparent;transition:color .12s}
-.end-card:hover .end-title::placeholder,.end-card:hover .end-msg::placeholder,.end-title:focus::placeholder,.end-msg:focus::placeholder{color:#c4c9d1}
+.end-title::placeholder,.end-msg::placeholder{color:#c4c9d1}
 .star{color:var(--danger);font-weight:700;margin-left:2px}
 .opts{margin-top:12px;display:flex;flex-direction:column;gap:8px}
 .opt-row{display:flex;align-items:center;gap:10px}
 .mark{width:18px;text-align:center;color:#b8bec7;flex:none;font-size:13px}
+/* the mark in front of an option is also its handle: drag it up or down to reorder */
+.opt-row .mark[data-omove]{width:24px;height:28px;line-height:28px;border-radius:6px;cursor:grab;touch-action:none;user-select:none}
+.opt-row .mark[data-omove]:hover{background:var(--chip);color:var(--sub)}
+.mark .m-g{display:none;font-size:17px;font-weight:700;color:var(--sub)}
+.opt-row:hover .mark[data-omove] .m-s,.opt-row.o-src .mark .m-s{display:none}
+.opt-row:hover .mark[data-omove] .m-g,.opt-row.o-src .mark .m-g{display:inline}
+.opt-row.other-row input:disabled{background:var(--bg);color:var(--muted);border:1px dashed var(--line);cursor:default}
+.pvr-other{margin:-2px 0 8px}
+.opts.o-dragging,.opts.o-dragging .mark{cursor:grabbing}
+.opt-row{position:relative}
+.opt-row.o-src{opacity:.4}
+.opt-row.drop-before::before,.opt-row.drop-after::after{content:"";position:absolute;left:0;right:0;height:3px;border-radius:2px;background:var(--primary);pointer-events:none}
+.opt-row.drop-before::before{top:-6px}
+.opt-row.drop-after::after{bottom:-6px}
 .thumb{width:40px;height:40px;border-radius:8px;background:var(--chip);color:var(--muted);display:flex;align-items:center;justify-content:center;font-size:11px;flex:none}
 .opt-row input{flex:1;height:40px;border:1px solid transparent;background:var(--bg);border-radius:8px;padding:0 12px;outline:none}
 .opt-row input:focus{border-color:var(--primary-line);background:var(--surface)}
@@ -449,7 +488,8 @@ button.pcard:hover{border-color:var(--primary-line);box-shadow:0 2px 8px rgba(20
 .link-btn{color:var(--primary);font-size:13px;font-weight:500;display:inline-flex;align-items:center;gap:5px;padding:4px 2px}
 .link-btn:hover{text-decoration:underline}
 .bulk{margin-top:10px;padding:12px;border-radius:10px;background:var(--bg);border:1px solid var(--line)}
-.bulk textarea{width:100%;min-height:96px;border:1px solid var(--line);border-radius:8px;padding:8px 10px;outline:none;resize:vertical;background:var(--surface)}
+/* bulk add: no scrollbar; the box grows a line at a time as more is typed or pasted */
+.bulk textarea{width:100%;min-height:96px;border:1px solid var(--line);border-radius:8px;padding:8px 10px;outline:none;resize:none;overflow:hidden;background:var(--surface)}
 .bulk textarea:focus{border-color:var(--primary-line)}
 .bulk-row{display:flex;justify-content:space-between;align-items:center;margin-top:8px;font-size:12px;color:var(--sub)}
 .bulk-row div{display:flex;gap:6px}
@@ -465,9 +505,18 @@ button.pcard:hover{border-color:var(--primary-line);box-shadow:0 2px 8px rgba(20
 .pvr-cc input.pvr-in{flex:1;min-width:0}
 .ph.tall{height:90px;padding-top:10px;resize:none}
 .ph:focus{border-style:solid;border-color:var(--primary-line);background:var(--surface)}
+/* hint text inside the card inputs is faint; a typed hint is dark only while it is being edited, then fades to match */
+.ph::placeholder{color:#cdd2d9}
+.ph{color:#b3b9c2}
+.ph:focus{color:var(--text)}
 .fake{margin-top:12px;min-height:42px;border-radius:8px;background:var(--bg);color:#9aa1ab;display:flex;align-items:center;padding:0 12px;font-size:13px}
 .fake.drop{height:84px;justify-content:center;border:1.5px dashed var(--line)}
-.scale{margin-top:14px;display:flex;align-items:center;gap:10px}
+.scale{margin-top:14px;display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap}
+.sc-lab{width:86px;height:30px;border:1px solid transparent;border-radius:6px;background:transparent;font:inherit;font-size:12px;color:var(--sub);outline:none;padding:0 6px;text-align:right}
+.sc-lab:not(.lo){text-align:left}
+.sc-lab:hover{border-color:var(--line)}
+.sc-lab:focus{border-color:var(--primary-line);background:var(--surface)}
+.sc-lab::placeholder{color:var(--muted)}
 .scale span{width:36px;height:36px;border-radius:50%;border:1px solid var(--line);display:flex;align-items:center;justify-content:center;color:var(--sub);font-size:13px}
 .scale small{color:var(--muted);font-size:12px}
 .grid-fake{margin-top:12px;display:grid;grid-template-columns:1.4fr repeat(3,1fr);gap:1px;background:var(--line);border:1px solid var(--line);border-radius:8px;overflow:hidden;font-size:12px;color:var(--sub)}
@@ -493,6 +542,22 @@ button.pcard:hover{border-color:var(--primary-line);box-shadow:0 2px 8px rgba(20
 .stepper{display:inline-flex;align-items:center;border:1px solid var(--line);border-radius:7px;height:26px;overflow:hidden}
 .stepper button{width:24px;height:100%;color:var(--sub)}
 .stepper button:hover{background:var(--chip)}
+.stepper button:disabled{opacity:.35;background:none}
+.rp-mbox{display:flex;align-items:center;gap:4px;min-height:40px;border:1px solid var(--line);border-radius:8px;padding:0 12px;font-size:13px;color:var(--sub);background:var(--surface);cursor:text}
+.rp-mbox:focus-within{border-color:var(--primary-line)}
+.tm-row{display:flex;align-items:center;gap:6px}
+.tm-row select,.tm-row input{height:40px;border:1px solid var(--line);border-radius:8px;background:var(--surface);font:inherit;font-size:14px;color:var(--text);outline:none}
+.tm-row select{padding:0 8px;cursor:pointer}
+.tm-row input{width:52px;text-align:center}
+.tm-row input::placeholder{color:#cdd2d9}
+.tm-row select:focus,.tm-row input:focus{border-color:var(--primary-line)}
+.tm-row b{color:var(--sub);font-weight:600}
+.tm-range{display:grid;grid-template-columns:auto 1fr;gap:8px 10px;align-items:center;font-size:13px;color:var(--sub)}
+.rp-mbox input{flex:1;min-width:0;height:38px;border:0;background:transparent;font:inherit;font-size:13.5px;color:var(--text);outline:none;padding:0;-moz-appearance:textfield}
+.rp-mbox input::-webkit-inner-spin-button{-webkit-appearance:none}
+.sc-step{height:30px}
+.sc-step button{width:30px;font-size:15px}
+.sc-step b{min-width:34px;text-align:center;font-size:13.5px;border-left:1px solid var(--line);border-right:1px solid var(--line);line-height:30px}
 .stepper input{width:36px;height:100%;border:0;border-left:1px solid var(--line);border-right:1px solid var(--line);text-align:center;outline:none;-moz-appearance:textfield}
 .stepper input::-webkit-inner-spin-button{-webkit-appearance:none}
 .hint{width:100%;font-size:12px;color:var(--sub)}
@@ -501,6 +566,11 @@ button.pcard:hover{border-color:var(--primary-line);box-shadow:0 2px 8px rgba(20
 
 .qside{position:absolute;top:0;right:-52px;display:none;flex-direction:column;gap:6px}
 .qwrap.active .qside{display:flex}
+/* duplicate: an icon to the left of the picked card, shown while the pointer is over it */
+.qdup{position:absolute;top:0;left:-52px;width:40px;height:40px;border-radius:10px;background:var(--surface);border:1px solid var(--line);color:var(--sub);display:none;align-items:center;justify-content:center}
+.qdup svg{width:17px;height:17px}
+.qwrap.active:hover .qdup,.qdup:focus-visible{display:flex}
+.qdup:hover{border-color:var(--primary-line);color:var(--primary)}
 .qside button{width:40px;height:40px;border-radius:10px;background:var(--surface);border:1px solid var(--line);color:var(--sub);font-size:11px;display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1.1}
 .qside button b{font-size:14px;font-weight:500}
 .qside button:hover{border-color:var(--primary-line);color:var(--primary)}
@@ -685,11 +755,41 @@ button.pcard:hover{border-color:var(--primary-line);box-shadow:0 2px 8px rgba(20
 .ed-rule{fill:none;stroke:var(--primary);stroke-width:1.8}
 .ed-pend{fill:none;stroke:var(--primary);stroke-width:1.6;stroke-dasharray:5 4;opacity:.75}
 .ed-back{fill:none;stroke:var(--danger);stroke-width:1.5;stroke-dasharray:5 4}
+/* a rule that clashes with an earlier one: solid red */
+.ed-conf{fill:none;stroke:var(--danger);stroke-width:1.8}
+.ed-label.conf{fill:var(--danger);font-weight:600}
+.ed-conf.ed-sel{stroke:var(--danger)!important}
+.ed-label.conf.sel{fill:var(--danger)}
 .ed-label{font-size:11px;fill:var(--sub);paint-order:stroke;stroke:#fff;stroke-width:4px;stroke-linejoin:round}
+/* lines: a wide transparent copy takes the click; the picked line is drawn thick */
+.ed-hit{fill:none;stroke:transparent;stroke-width:14;pointer-events:stroke;cursor:pointer}
+.ed-sel{stroke:var(--primary)!important;stroke-width:3.4!important}
+.ed-label[data-efrom]{pointer-events:auto;cursor:pointer}
+.ed-label[data-efrom]:hover{text-decoration:underline}
+.ed-label.sel{fill:var(--primary);font-weight:700}
+/* + handle on the right edge of a question: drag it onto another question or an ending to connect */
+.ln-plus{position:absolute;width:22px;height:22px;border-radius:50%;background:var(--primary);color:#fff;font-size:16px;font-weight:700;line-height:21px;text-align:center;cursor:crosshair;display:none;z-index:6;box-shadow:0 2px 6px rgba(47,124,246,.35);user-select:none;touch-action:none}
+.ln:hover + .ln-plus,.ln-plus:hover,.ln-plus.on{display:block}
+.lstage.connecting .ln-plus:not(.on){display:none}
+.lconn path{fill:none;stroke:var(--primary);stroke-width:2;stroke-dasharray:6 4}
+.lconn circle{fill:var(--primary)}
+.rule2.rule-on .rule-fold{color:var(--primary)}
+.rule2.rule-on .rule-box{box-shadow:0 0 0 2px var(--primary)}
+.rule2.conflict .rule-fold{color:var(--danger)}
+.rule2.conflict .rule-box{box-shadow:0 0 0 2px var(--danger)}
+.rule-conf{margin:0 0 8px;padding:8px 10px;border-radius:8px;background:var(--danger-soft);color:var(--danger);font-size:12.5px;font-weight:600;line-height:1.45}
+.lp-def2.on select{outline:2px solid var(--primary);outline-offset:-2px}
 .ed-label.rule{fill:var(--primary);font-weight:600}
 .ln{position:absolute;height:46px;display:flex;align-items:center;gap:8px;padding:0 12px;background:var(--surface);border:1.5px solid var(--line);border-radius:10px;font-size:13px;text-align:left;box-shadow:0 1px 3px rgba(0,0,0,.05)}
 .ln:hover{border-color:var(--primary-line)}
 .ln.sel{border-color:var(--primary);box-shadow:0 0 0 3px var(--primary-soft)}
+/* duplicate: an icon just left of the picked node, shown while the pointer is over the node or the icon
+   (the button's transparent right edge bridges the gap so the pointer can travel to it) */
+.ln-dup{position:absolute;width:46px;height:46px;padding:0 10px 0 0;background:none;border:0;display:none;align-items:center;justify-content:flex-start;z-index:4}
+.ln-dup i{display:flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:9px;background:var(--surface);border:1px solid var(--line);color:var(--sub);box-shadow:0 1px 3px rgba(0,0,0,.06)}
+.ln-dup svg{width:16px;height:16px}
+.ln.sel:hover ~ .ln-dup,.ln-dup:hover,.ln-dup:focus-visible{display:flex}
+.ln-dup:hover i{border-color:var(--primary-line);color:var(--primary)}
 .ln.start{background:var(--primary);color:#fff;border-color:var(--primary);justify-content:center;font-weight:600}
 .ln.end{border-style:dashed;justify-content:center;flex-direction:column;gap:0;line-height:1.25}
 .ln.end small{color:var(--muted);font-size:11px}
@@ -724,7 +824,14 @@ button.pcard:hover{border-color:var(--primary-line);box-shadow:0 2px 8px rgba(20
 .link-btn.danger{color:var(--danger)}
 .rp-empty small{display:block;margin-top:6px;font-size:12px}
 /* respondent preview overlay (colours inside .pvr come from the survey's branding) */
-.pvx{position:fixed;inset:0;z-index:80;background:#f5f6f8;display:flex;flex-direction:column}
+/* preview opens as a popup over the editor; in mobile mode the popup itself narrows to phone width */
+.pvx{position:fixed;inset:0;z-index:80;background:rgba(20,25,35,.45);display:flex;align-items:center;justify-content:center;padding:24px}
+.pvx-box{width:min(1080px,100%);height:min(880px,100%);background:#f5f6f8;border-radius:18px;box-shadow:0 20px 60px rgba(0,0,0,.28);display:flex;flex-direction:column;overflow:hidden;transition:width .25s ease}
+.pvx-box.mobile{width:min(430px,100%);height:min(860px,100%);border-radius:28px}
+.pvx-box.mobile .pvx-hint{display:none}
+.pvx-box.mobile .pvx-bar{padding:0 10px 0 18px;gap:6px}
+.pvx-box.mobile .pvx-txt{margin-left:0;padding:8px}
+.pvx-box.mobile .pvx-stage{padding:14px 14px 30px}
 .pvx-bar{display:flex;align-items:center;gap:10px;height:54px;flex:none;padding:0 20px;background:var(--surface);border-bottom:1px solid var(--line);font-size:13px}
 .pvx-bar .spacer{flex:1}
 .pvx-bar{height:68px;padding:0 16px 0 22px}
@@ -743,7 +850,7 @@ button.pcard:hover{border-color:var(--primary-line);box-shadow:0 2px 8px rgba(20
 .pvr-gname{position:absolute;top:-10px;left:16px;padding:0 8px;background:inherit;color:var(--pv-accent);font-size:.85em;font-weight:600}
 .pvx-stage{flex:1;overflow:auto;padding:32px 20px 60px;display:flex;justify-content:center;align-items:flex-start}
 .pvr{width:960px;max-width:100%;border-radius:16px;padding:40px 48px 44px;box-shadow:0 4px 24px rgba(20,30,50,.06);transition:width .2s}
-.pvr.mobile{width:520px;padding:28px 22px 32px;border-radius:28px}
+.pvr.mobile{width:100%;max-width:390px;padding:26px 20px 30px;border-radius:22px}
 .pvr-q{margin-bottom:30px}
 .pvr-q h3{margin:0 0 12px;font-weight:700;line-height:1.35;text-wrap:balance}
 .pvr-req{color:#e5484d;margin-left:4px}
@@ -761,7 +868,7 @@ button.pcard:hover{border-color:var(--primary-line);box-shadow:0 2px 8px rgba(20
 textarea.pvr-in{height:110px;padding:12px 14px;resize:vertical}
 .pvr-in:focus{border-color:var(--pv-accent);box-shadow:0 0 0 2px color-mix(in srgb,var(--pv-accent) 25%,transparent)}
 select.pvr-in option{color:#1f2329;background:#fff}
-.pvr-scale{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.pvr-scale{display:flex;align-items:center;justify-content:center;gap:8px;flex-wrap:wrap}
 .pvr-scale small{opacity:.6;font-size:12px}
 .pvr-scale button{width:44px;height:44px;border-radius:50%;border:1px solid color-mix(in srgb,currentColor 25%,transparent);background:transparent;color:inherit;font:inherit;cursor:pointer}
 .pvr-scale button.on{background:var(--pv-accent);color:var(--pv-ink);border-color:var(--pv-accent)}
@@ -813,6 +920,9 @@ select.pvr-in option{color:#1f2329;background:#fff}
 .cond2 .c-row{display:flex;align-items:center;gap:6px}
 .cond2 .c-op{width:auto;align-self:flex-start}
 .cond2 select.empty-sel{color:var(--muted)}
+/* removing a second or later condition: a labelled dashed button under that condition */
+.cond2 .c-del{height:34px;border:1.5px dashed #c9ced6;border-radius:10px;background:transparent;color:var(--sub);font-size:13px}
+.cond2 .c-del:hover{border-color:var(--danger);color:var(--danger);background:var(--danger-soft)}
 .join{display:flex;gap:4px;align-self:center;background:var(--surface);border-radius:8px;padding:3px;margin:2px 0}
 .join button{height:26px;padding:0 10px;border-radius:6px;font-size:12px;color:var(--sub)}
 .join button.on{background:var(--primary);color:#fff;font-weight:600}
@@ -876,6 +986,14 @@ select.pvr-in option{color:#1f2329;background:#fff}
 .pv-logo{display:flex;margin-bottom:22px}
 .pv-logo.center{justify-content:center}
 .pv-logo span{border:1.5px dashed currentColor;opacity:.55;border-radius:6px;padding:6px 14px;font-size:11px;font-weight:700;letter-spacing:.1em}
+.pv-logo img{display:block;max-height:44px;max-width:180px;object-fit:contain}
+/* logo upload in the branding panel */
+.logo-up{flex:1;min-width:0;display:flex;align-items:center;gap:8px;height:36px;padding:0 10px;border:1px dashed var(--line);border-radius:8px;background:var(--bg);color:var(--sub);font-size:12.5px;cursor:pointer}
+.logo-up:hover{border-color:var(--primary-line);color:var(--primary);background:var(--primary-soft)}
+.logo-up img{height:24px;max-width:60px;object-fit:contain}
+.logo-up span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.logo-del{flex:none;height:36px;padding:0 10px;border-radius:8px;color:var(--sub);font-size:12.5px}
+.logo-del:hover{background:var(--danger-soft);color:var(--danger)}
 .pv-q{margin-bottom:24px}
 .pv-q h3{margin:0 0 12px;font-weight:700;line-height:1.35}
 .pv-opt{display:flex;align-items:center;gap:10px;padding:10px 12px;border:1px solid color-mix(in srgb,currentColor 20%,transparent);margin-bottom:8px}
@@ -884,6 +1002,11 @@ select.pvr-in option{color:#1f2329;background:#fff}
 .pv-opt.on i{border:4px solid var(--pv-accent)}
 .pv-btn{display:block;width:100%;height:46px;font-weight:700;background:var(--pv-accent);color:var(--pv-ink);margin-top:6px;cursor:pointer}
 .pv-btn:hover{filter:brightness(1.06)}
+/* branding sample: the 다음 and 제출 buttons side by side, so both labels can be checked at once */
+.pv-btns{display:flex;gap:8px;margin-top:6px}
+.pv-btns .pv-btn{flex:1;min-width:0;margin-top:0;padding:0 8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+/* the sample button only looks pressed; it opens nothing */
+.pv-btn:active{filter:brightness(.92);transform:scale(.99)}
 button.pv-opt{width:100%;text-align:left;color:inherit;font:inherit;background:transparent;cursor:pointer}
 input.pv-in{display:block;width:100%;background:transparent;color:inherit;font:inherit;outline:none}
 input.pv-in::placeholder{color:currentColor;opacity:.5}
@@ -923,7 +1046,7 @@ const T = {
   number:  {label:'숫자',         ic:'#', kind:'input',  ph:'숫자를 입력하세요', alias:'숫자'},
   url:     {label:'URL',          ic:'↗', kind:'input',  ph:'https://', old:'구 임베딩', alias:'url 임베딩 링크'},
   capture: {label:'촬영',         ic:'◉', kind:'fake',   sub:'사진·영상', alias:'촬영 사진 촬영 영상 촬영 카메라'},
-  upload:  {label:'업로드',       ic:'⇪', kind:'drop',   sub:'사진·파일', alias:'업로드 파일 업로드 사진 업로드'},
+  upload:  {label:'업로드',       ic:'⇪', kind:'drop',   fake:'파일을 끌어오거나 클릭해서 업로드', alias:'업로드 파일 업로드 사진 업로드'},
   privacy: {label:'개인정보 수집', ic:'⛉', kind:'fake',  fake:'☐  개인정보 수집·이용에 동의합니다', alias:'개인정보 수집 동의'},
   phone:   {label:'전화번호',     ic:'☎', kind:'input',  ph:'010-0000-0000', fmt:true, alias:'전화번호 연락처 휴대폰'},
   email:   {label:'이메일',       ic:'@', kind:'input',  ph:'example@email.com', fmt:true, alias:'이메일 메일'},
@@ -939,16 +1062,19 @@ const CC = [['+82', '한국', '010-0000-0000'], ['+1', '미국·캐나다', '(00
   ['+44', '영국', '07400-123456'], ['+49', '독일', '01512-3456789'], ['+33', '프랑스', '06-12-34-56-78'], ['+61', '호주', '0412-345-678']];
 const ccOf = code => CC.find(c => c[0] === code) || CC[0];
 const ccOpts = sel => CC.map(([c, n]) => `<option value="${c}" ${c === sel ? 'selected' : ''}>${n} ${c}</option>`).join('');
+const timeHTML = (q, cls, k = '') => `<div class="tm-row ${cls}"><select data-f="tAp${k}" aria-label="오전·오후"><option value="AM" ${q['tAp' + k] !== 'PM' ? 'selected' : ''}>AM</option><option value="PM" ${q['tAp' + k] === 'PM' ? 'selected' : ''}>PM</option></select>
+  <input data-f="tH${k}" inputmode="numeric" maxlength="2" value="${esc(q['tH' + k] || '')}" placeholder="--" aria-label="시"><b>:</b><input data-f="tM${k}" inputmode="numeric" maxlength="2" value="${esc(q['tM' + k] || '')}" placeholder="--" aria-label="분"></div>`;
+// the set time as 24-hour HH:MM for the preview's time field, or '' when not filled in
+const time24 = (q, k = '') => { if (!q['tH' + k]) return ''; const h = +q['tH' + k] % 12 + (q['tAp' + k] === 'PM' ? 12 : 0); return `${String(h).padStart(2, '0')}:${String(+q['tM' + k] || 0).padStart(2, '0')}`; };
+const mbOf = q => q.maxMB || 40;   // upload size limit in MB, 40 unless set
 const VAR = {
   choice: {label:'형태', opts:[['text','텍스트'],['photo','사진']]},
   text:   {label:'길이', opts:[['short','단답형'],['long','장문형']]},
   capture:{label:'촬영', opts:[['photo','사진'],['video','영상']]},
-  upload: {label:'업로드', opts:[['photo','사진'],['file','파일']]},
 };
 const VAR_TEXT = {
   text:   {short:'단답형 텍스트', long:'장문형 텍스트'},
   capture:{photo:'카메라로 사진을 찍어 올려요', video:'카메라로 영상을 찍어 올려요'},
-  upload: {photo:'사진을 끌어오거나 클릭해서 업로드', file:'파일을 끌어오거나 클릭해서 업로드'},
 };
 // 촬영 (capture) is no longer offered; its definitions stay so questions saved earlier still show
 const GROUPS = [['선택', ['choice','dropdown','scale','rank','table']], ['입력', ['text','number','url']], ['파일', ['upload']],
@@ -1112,12 +1238,15 @@ function newQ(type){
 const curQ = () => E.qs.find(q => q.id === E.cur);
 const qOf = el => { const id = el.closest('[data-q]')?.dataset.q ?? E.cur; return E.qs.find(q => q.id === id); };
 // a group counts as one number and its members get sub-numbers: 1-1, 1-2, 2, 3 …
+// every member of a group shares one number (taken where the group first appears), then -1, -2 … in order
 function gno(q){
-  let n = 0, sub = 0, prev = null;
+  let n = 0;
+  const main = {}, sub = {};
   for (const x of E.qs){
-    if (x.group && x.group === prev) sub++; else { n++; sub = 1; }
-    prev = x.group;
-    if (x === q) return x.group ? `${n}-${sub}` : `${n}`;
+    if (!x.group) n++;
+    else if (!(x.group in main)){ main[x.group] = ++n; sub[x.group] = 0; }
+    if (x.group) sub[x.group]++;
+    if (x === q) return x.group ? `${main[x.group]}-${sub[x.group]}` : `${n}`;
   }
   return '?';
 }
@@ -1147,20 +1276,18 @@ const edHeadHTML = () => {
   const at = STEPS.findIndex(s => s[0] === view);
   return `<header class="ed-head steps"><div></div><nav class="eh-steps">${STEPS.map(([v, label, act], i) => `${i ? '<span class="st-line"></span>' : ''}<button class="st ${i < at ? 'done' : i === at ? 'on' : ''}" ${i === at ? 'aria-current="step"' : `data-act="${act}" data-src="상단 단계: ${label}"`}>
       <span class="st-n">${i < at ? CHECK : i + 1}</span>${label}</button>`).join('')}</nav>
-    <div class="eh-right"><span class="autosave" id="autoSave">${saveLabel()}</span>
-      <button class="ib" data-act="undo" title="되돌리기 (Ctrl+Z)">${ICN.undo}</button><button class="ib" data-act="redo" title="다시 하기 (Ctrl+Shift+Z)">${ICN.redo}</button>
-      <button class="ib" data-act="manualSave" title="임시 저장 (Ctrl+S)">${ICN.save}</button><span class="eh-div"></span>
-      <button class="ib box" data-act="settings" title="설정">${ICN.gear}</button>
-      <button class="ib box" data-act="preview" data-src="상단 미리보기 버튼" title="미리보기">${ICN.monitor}</button>
-      <button class="ib box" data-act="copyLink" title="링크 복사">${ICN.link}</button>
-      ${pubBtn()}<span class="avatar" aria-hidden="true">K</span></div></header>`;
+    <div class="eh-right"><button class="ib" data-act="undo" title="되돌리기 (Ctrl+Z)">${ICN.undo}</button><button class="ib" data-act="redo" title="다시 하기 (Ctrl+Shift+Z)">${ICN.redo}</button>
+      <button class="ib box" data-act="settings" title="설정">${ICN.gear}</button><span class="eh-div"></span>
+      <button class="tb" data-act="preview" data-src="상단 미리보기 버튼">미리보기</button>
+      <button class="tb" data-act="manualSave" title="임시 저장 (Ctrl+S)">임시저장</button>
+      ${pubBtn()}</div></header>`;
 };
 function toggleSettings(force){
   const old = $('.set-pop');
   if (old || force === false){ old?.remove(); return; }
   $('.eh-right').insertAdjacentHTML('beforeend', `<div class="set-pop" role="menu"><div class="sp-h">설정</div>
     <button data-act="setDelAll">${ICN.trash}데모 설문 모두 지우기</button>
-    <div class="sp-h">단축키</div><p class="sp-keys"><kbd>Ctrl</kbd>+<kbd>Z</kbd> 되돌리기 · <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>Z</kbd> 다시 하기<br><kbd>Ctrl</kbd>+<kbd>S</kbd> 임시 저장 · <kbd>Esc</kbd> 창 닫기</p></div>`);
+    <div class="sp-h">단축키</div><p class="sp-keys"><kbd>Ctrl</kbd>+<kbd>Z</kbd> 되돌리기 · <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>Z</kbd> 다시 하기<br><kbd>Ctrl</kbd>+<kbd>S</kbd> 임시 저장 · <kbd>Esc</kbd> 창 닫기<br><kbd>Ctrl</kbd>+<kbd>G</kbd> 그룹 만들기 (구조화)</p></div>`);
   log('settings_opened');
 }
 
@@ -1198,7 +1325,7 @@ function doPublish(){
   $('#confirmLayer').innerHTML = `<div class="confirm-bg" data-act="pubClose"><div class="pubm" role="dialog" aria-label="게시 완료">
     <div class="pubm-h"><b>게시했어요</b><button class="ib" data-act="pubClose" title="닫기">${ICN.close}</button></div>
     <div class="pubm-b done"><span class="pd-ic">${CHECK}</span>
-      <p>‘${esc(CUR.name)}’ 설문을 게시했어요. 제작에 ${dur} 걸렸어요.</p>
+      <p>‘${esc(CUR.name)}’ 설문을 게시했어요.</p>
       <div class="pd-link"><code>${pubLink()}</code><button class="btn" data-act="copyLink">${ICN.copy}복사</button></div>
       <small>데모라서 실제로 공개되지는 않아요.</small></div>
     <div class="pubm-f"><button class="btn primary" data-act="pubClose">완료</button></div></div></div>`;
@@ -1246,11 +1373,7 @@ function renderFields(){
   $('#fields').innerHTML = `<div class="f-head">설문 필드</div>
     <ul class="f-list">${E.qs.length ? E.qs.map((q, i) => `${grpHead(q, i)}<li draggable="true" data-fq="${q.id}" class="${q.group ? 'in-grp' : ''} ${q.group && q.group !== E.qs[i + 1]?.group ? 'grp-end' : ''}"><div class="f-item ${q.id === E.cur ? 'active' : ''}" data-field="${q.id}" role="button" tabindex="0" title="끌어서 순서 바꾸기 · 두 번 눌러 필드 이름 고치기">
       <span class="f-drag" aria-hidden="true">⋮⋮</span>${ico(q.type)}<span class="t ${fieldName(q) ? '' : 'empty'}">${fieldLabel(q)}</span>${q.required ? '<span class="req">필수</span>' : ''}</div></li>`).join('')
-      : '<li class="f-empty">아직 문항이 없어요</li>'}</ul>
-    ${E.qs.length ? `<div class="f-end"><div class="f-head">엔딩 필드<button class="f-add" data-act="addEnding" title="엔딩 추가">+</button></div>
-      <ul class="f-elist">${endings().map((en, k) => `<li><button class="f-item" data-act="goEnding" data-k="${k}">
-        <span class="ekind ${en.kind}">${END_KIND[en.kind]}</span><span class="t ${en.title.trim() ? '' : 'empty'}">${esc(en.title.trim() || END_PH[en.kind])}</span></button>
-        <button class="f-ex" data-act="delEnding" data-k="${k}" title="엔딩 삭제" aria-label="엔딩 삭제">×</button></li>`).join('')}</ul></div>` : ''}`;
+      : '<li class="f-empty">아직 문항이 없어요</li>'}</ul>`;
 }
 
 // endings: each is a 'response complete' or 'survey ended' screen; old projects had one ending object
@@ -1265,7 +1388,7 @@ function endings(){
   }
   return E.endings;
 }
-// faint ending screens under the questions; their hints only show on hover, like the description
+// ending screens under the questions, always shown with their hints
 function endingHTML(){
   return `<section class="ending"><div class="end-h">엔딩 필드</div>${endings().map((en, k) => `
     <div class="end-card" id="end-${k}" data-en="${k}"><div class="end-top">
@@ -1274,15 +1397,28 @@ function endingHTML(){
       <input class="end-title" data-end="title" value="${esc(en.title)}" placeholder="${END_PH[en.kind]}" aria-label="엔딩 제목">
       <textarea class="end-msg" data-end="msg" rows="2" placeholder="${END_MSG[en.kind]}" aria-label="엔딩 문구">${esc(en.msg)}</textarea></div>`).join('')}</section>`;
 }
+const GHOST_MSG = '오른쪽에서 문항 유형을 고르면 여기에 첫 문항이 만들어져요';
+let ghostTimer = null;
+function typeGhost(){
+  clearInterval(ghostTimer);
+  const el = $('#cscroll .ghost-msg'); if (!el) return;
+  if (matchMedia('(prefers-reduced-motion: reduce)').matches){ el.textContent = GHOST_MSG; return; }
+  let n = 0;
+  ghostTimer = setInterval(() => {
+    if (!el.isConnected){ clearInterval(ghostTimer); return; }
+    el.textContent = GHOST_MSG.slice(0, ++n);
+    if (n >= GHOST_MSG.length) clearInterval(ghostTimer);
+  }, 70);
+}
 function renderCards(){
   const sc = $('#cscroll'), top = sc.scrollTop;
   // survey title + description stay on top even with no questions
   const head = `<div class="sblock"><input class="stitle" data-sdesc="stitle" value="${esc(E.stitle || '')}" placeholder="제목" aria-label="설문 제목">
       <input class="sdesc" data-sdesc="desc" value="${esc(E.desc || '')}" placeholder="설명을 적어주세요" aria-label="설문 설명"></div>`;
   if (!E.qs.length){
-    sc.innerHTML = head + `<div class="ghost"><div class="ghost-line" style="width:55%"></div><div class="ghost-line" style="width:80%"></div><div class="ghost-line" style="width:80%"></div>
-      <div style="margin-top:16px;font-size:13px">오른쪽에서 문항 유형을 고르면 여기에 첫 문항이 만들어져요</div></div>`;
+    sc.innerHTML = head + `<div class="ghost"><p class="ghost-msg" aria-label="${GHOST_MSG}"></p></div>`;
     $('#cfoot').innerHTML = '';
+    typeGhost();
     return;
   }
   sc.innerHTML = head
@@ -1314,12 +1450,17 @@ function cardHTML(q, i){
           <button class="x" data-act="delOpt" data-i="${k}" title="선택지 삭제">×</button></div></div>`).join('')}</div>
       <div class="opt-actions"><button class="link-btn" data-act="addOpt">⊕ 사진 선택지 추가</button></div>`;
   } else if (t.kind === 'choice'){
-    const mark = k => `<span class="mark">${q.type === 'dropdown' || q.type === 'rank' ? (k + 1) + '.' : q.selMode === 'one' ? '○' : '☐'}</span>`;
+    // 객관식 shows no circle or box in front of an option; the spot only holds the ⋮ drag handle on hover
+    const sym = k => q.type === 'dropdown' || q.type === 'rank' ? (k + 1) + '.' : '';
+    const mark = k => `<span class="mark" data-omove="${k}" title="끌어서 순서 바꾸기"><span class="m-s">${sym(k)}</span><span class="m-g" aria-hidden="true">⋮</span></span>`;
+    // 기타: a last option the respondent fills in themselves (객관식 only)
+    const other = q.type === 'choice' && q.other ? `<div class="opt-row other-row"><span class="mark">${sym(q.options.length)}</span>
+        <input disabled placeholder="기타 (응답자가 직접 입력)" aria-label="기타 선택지"><button class="x" data-act="delOther" title="기타 삭제">×</button></div>` : '';
     body = `<div class="opts">${q.options.map((o, k) => `<div class="opt-row">${mark(k)}
         <input data-f="opt" data-i="${k}" value="${esc(o)}" placeholder="선택지 ${k + 1}">
-        <button class="x" data-act="delOpt" data-i="${k}" title="선택지 삭제">×</button></div>`).join('')}</div>
+        <button class="x" data-act="delOpt" data-i="${k}" title="선택지 삭제">×</button></div>`).join('')}${other}</div>
       <div class="opt-actions"><button class="link-btn" data-act="addOpt">⊕ 선택지 추가</button>
-        <button class="link-btn" data-act="bulkToggle">☰ 일괄 추가</button></div>
+        <button class="link-btn" data-act="bulkToggle">☰ 일괄 추가</button>${q.type === 'choice' && !q.other ? '<button class="link-btn" data-act="addOther">⊕ 기타 추가</button>' : ''}</div>
       ${E.bulkFor === q.id ? `<div class="bulk"><textarea id="bulkText" placeholder="한 줄에 선택지 하나씩 붙여넣으세요&#10;예)&#10;50명 미만&#10;50~299명"></textarea>
         <div class="bulk-row"><span>줄마다 선택지 하나로 추가돼요</span><div><button class="btn" data-act="bulkToggle">취소</button>
         <button class="btn primary" data-act="bulkAdd">추가하기</button></div></div></div>` : ''}`;
@@ -1329,26 +1470,29 @@ function cardHTML(q, i){
       : `<input class="ph" data-f="placeholder" value="${esc(q.placeholder)}" placeholder="${esc(ph)}">`;
     body = q.type === 'phone' ? `<div class="cc-row"><select class="ph cc" data-cc aria-label="국가 번호">${ccOpts(q.cc || '+82')}</select>${tag}</div>` : tag;
   } else if (t.kind === 'scale'){
-    body = `<div class="scale"><small>전혀 아니다</small>${[1,2,3,4,5].map(n => `<span>${n}</span>`).join('')}<small>매우 그렇다</small></div>`;
+    // both end labels are editable; empty falls back to the default wording
+    body = `<div class="scale"><input class="sc-lab lo" data-f="scaleLo" value="${esc(q.scaleLo ?? '')}" placeholder="전혀 아니다" aria-label="낮은 점수 이름">${scaleVals(q).map(n => `<span>${n}</span>`).join('')}<input class="sc-lab" data-f="scaleHi" value="${esc(q.scaleHi ?? '')}" placeholder="매우 그렇다" aria-label="높은 점수 이름"></div>`;
   } else if (t.kind === 'table'){
     body = `<div class="grid-fake"><span></span><span>그렇다</span><span>보통</span><span>아니다</span>
       <span>강의 내용</span><span>○</span><span>○</span><span>○</span><span>진행 방식</span><span>○</span><span>○</span><span>○</span></div>`;
   } else {
     const span = q.type === 'date' && q.dMin && q.dMax ? `<small style="margin-left:auto">${dotDate(q.dMin)} ~ ${dotDate(q.dMax)}</small>` : '';
-    body = `<div class="fake ${t.kind === 'drop' ? 'drop' : ''}">${VAR_TEXT[q.type]?.[q.variant] ?? t.fake}${span}</div>`;
+    const tspan = q.type === 'time' && (time24(q, 1) || time24(q, 2)) ? `<small style="margin-left:auto">${time24(q, 1) || '처음'} ~ ${time24(q, 2) || '끝'}</small>` : '';
+    body = q.type === 'time' ? `<div class="fake">${t.fake}${tspan}</div>` : q.type === 'privacy' ? AGREE.map(v => `<div class="fake">○&nbsp;&nbsp;${v}</div>`).join('')
+      : `<div class="fake ${t.kind === 'drop' ? 'drop' : ''}">${q.type === 'upload' ? `${t.fake} · 최대 ${mbOf(q)}MB` : VAR_TEXT[q.type]?.[q.variant] ?? t.fake}${span}</div>`;
   }
-  const vtag = VAR[q.type] ? `<span class="vlabel">${varLabel(q.type, q.variant)}</span>` : '';
   return `<div class="qwrap ${q.id === E.cur ? 'active' : ''}" id="card-${q.id}" data-q="${q.id}">
     <div class="qgrip" draggable="true" data-grip="${q.id}" title="끌어서 순서 바꾸기" aria-label="Q${gno(q)} 순서 바꾸기">${GRIP}</div>
     <div class="qcard">
       <div class="qtop"><span class="qno">Q${gno(q)}${q.required ? '<span class="star">*</span>' : ''}</span>
-        <button class="tchip" data-act="typeMenu" title="문항 유형 바꾸기">${ico(q.type)}${t.label} ▾</button>${vtag}
+        <button class="tchip" data-act="typeMenu" title="문항 유형 바꾸기">${ico(q.type)}${t.label} ▾</button>
         ${E.menuFor === q.id ? typeMenuHTML(q) : ''}</div>
       <input class="qtitle" data-f="title" value="${esc(q.title)}" placeholder="질문을 입력하세요">
       <input class="qdesc" data-f="desc" value="${esc(q.desc || '')}" placeholder="설명을 입력해주세요" aria-label="설명">
       ${body}
     </div>
     <div class="qside"><button class="del" data-act="delQ" title="문항 삭제"><b>✕</b>삭제</button></div>
+    <button class="qdup" data-act="dup" title="이 문항 복제" aria-label="문항 복제">${ICN.copy}</button>
     <button class="addq" data-act="addQ" data-src="카드 아래 문항 추가">+ 문항 추가</button>
   </div>`;
 }
@@ -1369,9 +1513,22 @@ function condHTML(q){
       if (q.selMode !== 'max' && filled < n) h += `<div class="hint warn">선택지가 ${n}개 이상 있어야 해요 (지금 ${filled}개)</div>`;
     }
   }
-  if (t.kind === 'input') h += `<div class="rp-l">안내 문구 (플레이스홀더)</div>
+  if (t.kind === 'input' && q.type !== 'text') h += `<div class="rp-l">안내 문구 (플레이스홀더)</div>
     <input class="rp-in" data-f="placeholder" value="${esc(q.placeholder)}" placeholder="${esc(q.type === 'phone' ? ccOf(q.cc)[2] : VAR_TEXT[q.type]?.[q.variant] ?? t.ph)}">`;
   if (t.fmt) h += rtog(q, 'formatCheck', q.type === 'email' ? '이메일 형식만 받기' : '전화번호 형식만 받기');
+  if (q.type === 'scale'){
+    const n = q.scaleMax || 5;
+    h += `<div class="rp-l">점수 범위</div><div class="rp-many"><span>1 ~</span>
+      <div class="stepper sc-step"><button data-act="scStep" data-v="-1" ${n <= 2 ? 'disabled' : ''} aria-label="최고 점수 줄이기">−</button><b>${n}</b><button data-act="scStep" data-v="1" ${n >= 10 ? 'disabled' : ''} aria-label="최고 점수 늘리기">+</button></div><span>점</span></div>
+      <div class="hint">응답자는 1부터 ${n}까지 중에서 골라요 (최대 10점)</div>`;
+  }
+  // one box: the number to edit, with MB inside the box
+  if (q.type === 'upload') h += `<div class="rp-l">최대 용량</div><label class="rp-mbox"><input type="number" min="1" max="1000" step="1" data-mb value="${mbOf(q)}" aria-label="최대 용량 (MB, 1~1000)">MB</label>`;
+  if (q.type === 'time'){
+    const a = time24(q, 1), b = time24(q, 2);
+    h += `<div class="rp-l">응답 가능 시간</div><div class="tm-range"><span>부터</span>${timeHTML(q, 'on-panel', 1)}<span>까지</span>${timeHTML(q, 'on-panel', 2)}</div>
+      <div class="hint ${a && b && a > b ? 'warn' : ''}">${!a && !b ? '비워 두면 아무 시간이나 고를 수 있어요' : a && b && a > b ? '끝 시간이 시작 시간보다 빨라요' : `응답자는 ${a || '처음'}부터 ${b || '끝'}까지만 고를 수 있어요`}</div>`;
+  }
   if (q.type === 'date') h += calHTML(q);
   return h;
 }
@@ -1409,7 +1566,7 @@ function renderPanel(){
   const varHTML = v ? `<div class="rp-h first">설문 설정</div>
     <div class="var-opts">${v.opts.map(([val, l]) => `<button class="var-opt ${q.variant === val ? 'on' : ''}" data-act="variant" data-v="${val}" aria-pressed="${q.variant === val}">
       <span class="var-mini">${VMINI[val]}</span>${l}</button>`).join('')}</div>` : '';
-  p.innerHTML = `<div class="rp-box"><button class="rp-x" data-act="rpClose" title="닫기">×</button>
+  p.innerHTML = `<div class="rp-box">
     ${varHTML}
     <div class="rp-h ${v ? '' : 'first'}">응답 조건</div>
     ${condHTML(q)}
@@ -1528,6 +1685,23 @@ function setType(q, to, variant){
 }
 
 // photos are shrunk to 320px so they stay light in memory and in the undo history
+function loadLogo(file, cb){
+  if (!/^image\//.test(file.type)){ toast('이미지 파일(PNG, JPG, SVG)을 골라주세요'); return; }
+  const r = new FileReader();
+  r.onload = () => {
+    if (file.type === 'image/svg+xml' && file.size < 200 * 1024) return cb(r.result);
+    const img = new Image();
+    img.onload = () => {
+      const k = Math.min(1, 400 / Math.max(img.width, img.height)), c = document.createElement('canvas');
+      c.width = Math.round(img.width * k); c.height = Math.round(img.height * k);
+      c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+      cb(c.toDataURL('image/png'));
+    };
+    img.onerror = () => toast('이 파일은 이미지로 열 수 없어요. PNG나 JPG를 골라주세요');
+    img.src = r.result;
+  };
+  r.readAsDataURL(file);
+}
 function loadPhoto(file, cb){
   const r = new FileReader();
   r.onload = () => {
@@ -1575,8 +1749,12 @@ const ensureLogic = q => {
   return q;
 };
 // answers a rule can branch on: written choices, or the 1~5 points of a scale
-const answersOf = q => q.type === 'scale' ? ['1', '2', '3', '4', '5'] : T[q.type].kind === 'choice' ? q.options.filter(o => o.trim()) : [];
+const AGREE = ['동의합니다', '동의하지 않습니다'];
+const scaleVals = q => Array.from({length: q.scaleMax || 5}, (_, i) => String(i + 1));
+const answersOf = q => q.type === 'scale' ? scaleVals(q) : q.type === 'privacy' ? AGREE : T[q.type].kind === 'choice' ? [...q.options.filter(o => o.trim()), ...(q.type === 'choice' && q.other && q.variant !== 'photo' ? ['기타'] : [])] : [];
 const qTitle = q => q.title.trim() || '제목 없음';
+// the logic screen names questions the way the left field list does: its own field name if one was typed, else the question
+const lTitle = q => fieldName(q) || '제목 없음';
 // the scenario questions, loaded into the editor on request so both screens share them
 const SAMPLE = [
   ['choice', '개인정보 수집에 동의하십니까?', ['동의합니다', '동의하지 않습니다']],
@@ -1598,7 +1776,7 @@ const lIdx = id => L.qs.findIndex(q => q.id === id);
 const lq = id => L.qs.find(q => q.id === id);
 const lno = q => 'Q' + gno(q);
 const short = s => s.length > 16 ? s.slice(0, 16) + '…' : s;
-const tLabel = t => END[t] ? END[t].label : lq(t) ? `${lno(lq(t))} ${short(qTitle(lq(t)))}` : '(삭제된 문항)';
+const tLabel = t => END[t] ? END[t].label : lq(t) ? `${lno(lq(t))} ${short(lTitle(lq(t)))}` : '(삭제된 문항)';
 // no explicit default means "the next question in order"; the last question ends in 응답 완료
 const defTarget = q => q.def ?? (L.qs[lIdx(q.id) + 1]?.id || 'end_done');
 // A rule is a list of conditions joined by AND or OR; each condition compares one question's answer with a value.
@@ -1631,16 +1809,41 @@ function isBroken(q){
   return q.rules.some(r => filled(r).length && (back(r.target) || (!r.target && q.id !== L.sel))) || back(defTarget(q));
 }
 
+function ruleSig(r){
+  const cs = filled(r);
+  return cs.length ? r.join + ':' + cs.map(c => `${c.q}|${c.op}|${c.val}`).sort().join('&') : 'EMPTY';
+}
+// rule id → number of the earlier rule (로직 #n) it clashes with
+function findConflicts(){
+  const m = new Map();
+  L.qs.forEach(q => {
+    const ans = answersOf(q), seen = [], caught = new Set();
+    q.rules.forEach((r, i) => {
+      if (!r.target && !filled(r).length) return;   // a rule nothing has been chosen for yet
+      const sig = ruleSig(r), own = filled(r).length > 0 && ans.length > 0 && filled(r).every(c => c.q === q.id);
+      let hit = seen.find(x => x.sig === sig)?.i ?? -1;
+      if (hit < 0 && own){
+        const t = ans.filter(a => ruleTrue(r, {[q.id]: a}));
+        if (t.length && t.every(a => caught.has(a))) hit = q.rules.findIndex((x, j) => j < i && filled(x).length && t.some(a => ruleTrue(x, {[q.id]: a})));
+      }
+      if (hit >= 0) m.set(r.id, hit + 1);
+      seen.push({sig, i});
+      if (own) ans.filter(a => ruleTrue(r, {[q.id]: a})).forEach(a => caught.add(a));
+    });
+  });
+  return m;
+}
 function edges(){
+  L.conflict = findConflicts();
   const es = [{from: 'start', to: L.qs[0]?.id || 'end_done', kind: 'def', label: ''}];
   L.qs.forEach(q => {
     const live = q.rules.filter(r => r.target && filled(r).length);
-    live.forEach(r => es.push({from: q.id, to: r.target, kind: 'rule', label: ruleLabel(q, r)}));
+    live.forEach(r => es.push({from: q.id, to: r.target, kind: L.conflict.has(r.id) ? 'conf' : 'rule', label: ruleLabel(q, r) + (L.conflict.has(r.id) ? ' · 겹침' : ''), rid: r.id}));
     // a destination picked before its condition is filled still shows, as a dashed 'pending' line
-    q.rules.filter(r => r.target && !filled(r).length).forEach(r => es.push({from: q.id, to: r.target, kind: 'pend', label: '조건을 골라주세요'}));
+    q.rules.filter(r => r.target && !filled(r).length).forEach(r => es.push({from: q.id, to: r.target, kind: L.conflict.has(r.id) ? 'conf' : 'pend', label: L.conflict.has(r.id) ? '겹침 · 조건을 골라주세요' : '조건을 골라주세요', rid: r.id}));
     // the default path is drawn unless every possible answer is already caught by a rule
     const ans = answersOf(q), covered = ans.length && ans.every(o => live.some(r => ruleTrue(r, {[q.id]: o})));
-    if (!covered) es.push({from: q.id, to: defTarget(q), kind: 'def', label: live.length ? '그 외' : ''});
+    if (!covered) es.push({from: q.id, to: defTarget(q), kind: 'def', label: live.length ? '그 외' : '', rid: 'def'});
   });
   return es;
 }
@@ -1683,14 +1886,14 @@ function renderCanvas(){
   let lane = 0, back = 0; const parts = [], perSrc = {};
   es.forEach(e => {
     const s = P[e.from], d = P[e.to]; if (!s || !d) return;
-    const sy = s.y + NH, cls = d.y <= s.y ? 'back' : e.kind;
+    const sy = s.y + NH, cls = e.kind === 'conf' ? 'conf' : d.y <= s.y ? 'back' : e.kind;
     let path, lx, ly, anchor = 'start';
-    if (cls !== 'back' && d.y - sy <= VG + 10){
+    if (cls !== 'back' && d.y > s.y && d.y - sy <= VG + 10){
       path = `M${s.cx},${sy} C${s.cx},${sy + VG / 2} ${d.cx},${d.y - VG / 2} ${d.cx},${d.y}`;
       lx = (s.cx + d.cx) / 2 + 8; ly = sy + VG / 2 + 4;
-    } else if (cls !== 'back'){
+    } else if (cls !== 'back' && d.y > s.y){
       // unarranged: every long jump shares one lane, so lines pile up; arranged: each gets its own lane
-      const X = L.arranged ? maxX + 30 + (lane++) * 16 : Math.max(s.cx + s.w / 2, d.cx + d.w / 2) + 40;
+      const X = (L.arranged ? maxX + 30 + (lane++) * 16 : Math.max(s.cx + s.w / 2, d.cx + d.w / 2) + 40) + (cls === 'conf' ? 16 : 0);
       const smy = s.y + NH / 2, k = perSrc[e.from] = (perSrc[e.from] || 0) + 1;
       path = END[e.to] ? `M${s.cx + s.w / 2},${smy} H${X} V${d.y - 14 - (L.arranged ? lane * 4 : 0)} H${d.cx} V${d.y}`
         : `M${s.cx + s.w / 2},${smy} H${X} V${d.y + NH / 2} H${d.cx + d.w / 2}`;
@@ -1700,7 +1903,7 @@ function renderCanvas(){
       path = `M${s.cx - s.w / 2},${s.y + NH / 2} H${X} V${d.y + NH / 2} H${d.cx - d.w / 2}`;
       lx = s.cx - s.w / 2 - 6; ly = s.y + NH / 2 - 6; anchor = 'end';
     }
-    parts.push({path, cls, label: e.label, lx, ly, anchor, on: trail.pairs.has(e.from + '>' + e.to)});
+    parts.push({path, cls, label: e.label, lx, ly, anchor, on: trail.pairs.has(e.from + '>' + e.to), from: e.from, rid: e.rid});
   });
   const left = minX - 60 - back * 14 - (back ? 90 : 0), right = maxX + 70 + lane * 16 + 130;
   const top = minY - 20;
@@ -1708,33 +1911,37 @@ function renderCanvas(){
   if (L.frame){ ox = L.frame.ox; oy = L.frame.oy; W = Math.max(L.frame.W, right + ox); H = Math.max(L.frame.H, maxY + 30 + oy); }
   L.W = W; L.H = H; L.ox = ox; L.oy = oy;
   const z = L.zoom;
-  const marks = [['def', '#aab1bc'], ['rule', 'var(--primary)'], ['pend', 'var(--primary)'], ['back', 'var(--danger)']].map(([k, c]) =>
-    `<marker id="ar-${k}" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L8,4 L0,8z" style="fill:${c}"/></marker>`).join('');
+  const marks = [['def', '#aab1bc'], ['rule', 'var(--primary)'], ['pend', 'var(--primary)'], ['back', 'var(--danger)'], ['conf', 'var(--danger)']].map(([k, c]) =>
+    `<marker id="ar-${k}" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L8,4 L0,8z" style="fill:${c}"/></marker>`).join('')
+    + '<marker id="ar-sel" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="3.4" markerHeight="3.4" orient="auto"><path d="M0,0 L8,4 L0,8z" style="fill:var(--primary)"/></marker>'
+    + '<marker id="ar-selconf" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="3.4" markerHeight="3.4" orient="auto"><path d="M0,0 L8,4 L0,8z" style="fill:var(--danger)"/></marker>';
   const svg = `<svg width="${W}" height="${H}"><defs>${marks}</defs><g transform="translate(${ox},${oy})">
-    ${parts.map(p => `<path d="${p.path}" class="ed-${p.cls} ${p.on ? 'ed-on' : ''}" marker-end="url(#ar-${p.on ? 'rule' : p.cls})"/>`).join('')}
-    ${parts.filter(p => p.label).map(p => `<text x="${p.lx}" y="${p.ly}" text-anchor="${p.anchor}" class="ed-label ${p.cls === 'rule' || p.cls === 'pend' ? 'rule' : ''}">${esc(p.label)}</text>`).join('')}</g></svg>`;
+    ${[...parts.filter(p => p.cls !== 'conf'), ...parts.filter(p => p.cls === 'conf')].map(p => `<path d="${p.path}" class="ed-${p.cls} ${p.on ? 'ed-on' : ''} ${p.rid && L.sel === p.from && L.selRule === p.rid ? 'ed-sel' : ''}" marker-end="url(#ar-${p.rid && L.sel === p.from && L.selRule === p.rid ? (p.cls === 'conf' ? 'selconf' : 'sel') : p.on ? 'rule' : p.cls})"/>`).join('')}
+    ${L.test ? '' : parts.filter(p => p.rid).map(p => `<path d="${p.path}" class="ed-hit" data-efrom="${p.from}" data-erule="${p.rid}"><title>눌러서 이 연결의 로직 보기</title></path>`).join('')}
+    ${parts.filter(p => p.label).map(p => `<text x="${p.lx}" y="${p.ly}" text-anchor="${p.anchor}" class="ed-label ${p.cls === 'rule' || p.cls === 'pend' ? 'rule' : p.cls === 'conf' ? 'conf' : ''} ${p.rid && L.sel === p.from && L.selRule === p.rid ? 'sel' : ''}" ${p.rid && !L.test ? `data-efrom="${p.from}" data-erule="${p.rid}"` : ''}>${esc(p.label)}</text>`).join('')}</g></svg>`;
   const node = (id, p) => {
     const st = `left:${p.cx - p.w / 2 + ox}px;top:${p.y + oy}px;width:${p.w}px`;
-    const drag = nodeDrag?.moved && nodeDrag.start.some(p => p.k === id) ? 'dragging' : '';
+    const drag = nodeDrag?.moved && nodeDrag.start.some(p => p.k === id) ? 'dragging' : nodeDrag?.over === id || conn?.over === id ? 'swap-over' : '';
     if (id === 'start') return `<div class="ln start ${drag}" data-lid="start" style="${st}">시작</div>`;
     const run = `${trail.seen.has(id) ? 'visited' : ''} ${trail.cur === id ? 'cur' : ''}`;
     if (END[id]) return `<div class="ln end ${run} ${drag}" data-lid="${id}" style="${st}">${END[id].label}<small>${END[id].desc}</small></div>`;
     const q = lq(id), b = L.broken.has(id);
-    return `<button class="ln ${L.sel === id && !L.test ? 'sel' : ''} ${L.checked.has(id) ? 'checked' : ''} ${q.group ? 'in-grp' : ''} ${b ? 'broken' : ''} ${run} ${drag}" data-lnode="${id}" style="${st}">
-      <span class="qno">${lno(q)}</span>${ico(q.type)}<span class="t">${esc(qTitle(q))}</span>${b ? '<span class="bk">연결이 끊겼어요</span>' : ''}</button>`;
+    return `<button class="ln ${L.sel === id && !L.test && !L.selRule ? 'sel' : ''} ${L.checked.has(id) ? 'checked' : ''} ${q.group ? 'in-grp' : ''} ${b ? 'broken' : ''} ${run} ${drag}" data-lnode="${id}" style="${st}">
+      <span class="qno">${lno(q)}</span>${ico(q.type)}<span class="t">${esc(lTitle(q))}</span>${b ? '<span class="bk">연결이 끊겼어요</span>' : ''}</button>`;
   };
   const stage = $('#lStage');
   stage.style.width = W * z + 'px'; stage.style.height = H * z + 'px';
+  stage.classList.toggle('connecting', !!conn?.moved);
   panStage();
   // a dashed '페이지 나눔' line in the gap under a question that ends a page
   const breaks = L.qs.slice(0, -1).filter(q => q.pageBreak && P[q.id]).map(q => { const p = P[q.id];
-    return `<div class="lpb" style="left:${p.cx - p.w / 2 + ox}px;top:${p.y + oy + NH + VG / 2}px;width:${p.w}px"><span>페이지 나눔</span></div>`; }).join('');
+    return `<div class="lpb ${pbDrag?.from === q.id && pbDrag.moved ? 'pb-src' : ''} ${L.pbSel === q.id ? 'pb-sel' : ''}" data-pb="${q.id}" style="left:${p.cx - p.w / 2 + ox - 60}px;top:${p.y + oy + NH + VG / 2}px;width:${p.w + 120}px"><span title="끌어서 페이지 나눔 옮기기">페이지 나눔</span></div>`; }).join('');
   // each group gets a dashed box around its members' nodes, labelled with the group name
   const gboxes = Object.keys(L.groups || {}).map(g => {
     const ps = L.qs.filter(q => q.group === g && P[q.id]).map(q => P[q.id]); if (!ps.length) return '';
     const x0 = Math.min(...ps.map(p => p.cx - p.w / 2)) - 14, x1 = Math.max(...ps.map(p => p.cx + p.w / 2)) + 14;
     const y0 = Math.min(...ps.map(p => p.y)) - 30, y1 = Math.max(...ps.map(p => p.y)) + NH + 12;
-    return `<div class="lgrp" data-lgrp="${g}" title="끌어서 그룹 전체 옮기기" style="left:${x0 + ox}px;top:${y0 + oy}px;width:${x1 - x0}px;height:${y1 - y0}px"><span>${esc(L.groups[g].name)} · ${ps.length}개</span><button class="lgrp-x" data-act="lDelGroup" data-g="${g}" title="그룹 해제 (문항은 그대로)" aria-label="그룹 해제">×</button></div>`;
+    return `<div class="lgrp ${nodeDrag?.moved && nodeDrag.grp === g ? 'grp-over' : ''} ${L.gsel === g ? 'grp-sel' : ''}" data-lgrp="${g}" title="끌어서 그룹 전체 옮기기" style="left:${x0 + ox}px;top:${y0 + oy}px;width:${x1 - x0}px;height:${y1 - y0}px"><span><input class="g-name lgrp-name" data-gname="${g}" value="${esc(L.groups[g].name)}" style="width:${L.groups[g].name.length + 1.5}em" title="눌러서 이름 바꾸기" aria-label="그룹 이름"> · ${ps.length}개</span><button class="lgrp-x" data-act="lDelGroup" data-g="${g}" title="그룹 해제 (문항은 그대로)" aria-label="그룹 해제">×</button></div>`;
   }).join('');
   // Shift-picked nodes get a small action bar at the midpoint between them: swap (exactly two) and group
   const picked = L.test ? [] : L.qs.filter(q => L.checked.has(q.id) && P[q.id]).map(q => P[q.id]);
@@ -1743,13 +1950,109 @@ function renderCanvas(){
     return `<div class="lsel-bar" style="left:${mx + ox}px;top:${my + oy}px">${picked.length === 2 ? '<button data-act="lSwap">⇅ 순서 바꾸기</button>' : ''}
       <button data-act="lGroup" class="pri">그룹 만들기 (${picked.length})</button></div>`;
   })() : '';
-  stage.innerHTML = `<div class="linner" style="width:${W}px;height:${H}px;transform:scale(${z})">${gboxes}${svg}${breaks}${selBar}${Object.entries(P).map(([id, p]) => node(id, p)).join('')}</div>`;
+  stage.innerHTML = `<div class="linner" style="width:${W}px;height:${H}px;transform:scale(${z})">${gboxes}${svg}${breaks}${selBar}${pbDrag?.gap ? `<div class="lins" style="left:${pbDrag.gap.x + ox}px;top:${pbDrag.gap.y + oy}px;width:${pbDrag.gap.w}px"></div>` : ''}${nodeDrag?.ins ? `<div class="lins" style="left:${nodeDrag.ins.x + ox}px;top:${nodeDrag.ins.y + oy}px;width:${nodeDrag.ins.w}px"></div>` : ''}${Object.entries(P).map(([id, p]) => node(id, p) + (lq(id) && !L.test ? `<span class="ln-plus ${conn?.from === id ? 'on' : ''}" data-plus="${id}" title="끌어서 다른 문항이나 엔딩에 연결" style="left:${p.cx + p.w / 2 + ox - 11}px;top:${p.y + oy + NH / 2 - 11}px">+</span>` : '')).join('')}${conn?.moved ? `<svg class="lconn" width="${W}" height="${H}"><path d="M${conn.x0 + ox},${conn.y0 + oy} L${conn.x + ox},${conn.y + oy}"/><circle cx="${conn.x + ox}" cy="${conn.y + oy}" r="4"/></svg>` : ''}${L.sel && !L.test && lq(L.sel) && P[L.sel] ? `<button class="ln-dup" data-act="lDup" title="이 문항 복제" aria-label="문항 복제" style="left:${P[L.sel].cx - P[L.sel].w / 2 + ox - 46}px;top:${P[L.sel].y + oy}px"><i>${ICN.copy}</i></button>` : ''}</div>`;
   const pb = $('#lBreakBtn'), sq = L.sel && lq(L.sel); if (pb) pb.textContent = sq?.pageBreak ? '페이지 나눔 지우기' : '페이지 나누기';
-  const gb = $('#lGroupBtn'); if (gb){ gb.textContent = `그룹 만들기${L.checked.size ? ` (${L.checked.size})` : ''}`; gb.classList.toggle('primary', L.checked.size >= 2); }
+  // with a group (or a question in one) picked and nothing Shift-picked, the button ungroups it instead
+  const gb = $('#lGroupBtn'), og = L.checked.size < 2 && (L.gsel || (L.sel && lq(L.sel)?.group));
+  if (gb){
+    if (og && L.groups[og]){ gb.textContent = '그룹 해제'; gb.dataset.act = 'lDelGroup'; gb.dataset.g = og; gb.classList.remove('primary'); gb.classList.add('ungroup'); }
+    else { gb.textContent = `그룹 만들기${L.checked.size ? ` (${L.checked.size})` : ''}`; gb.dataset.act = 'lGroup'; delete gb.dataset.g; gb.classList.remove('ungroup'); gb.classList.toggle('primary', L.checked.size >= 2); }
+  }
   $('#lEmpty').hidden = L.qs.length > 0;
 }
 
 // the canvas moves freely: panning shifts the whole stage, with no scroll limits
+function swapQ(x, y, where){
+  const qs = [...L.qs], i = qs.indexOf(x), j = qs.indexOf(y);
+  [qs[i], qs[j]] = [qs[j], qs[i]];
+  // nodes the maker dragged by hand trade their spots too
+  const px = L.pos[x.id], py = L.pos[y.id];
+  if (py) L.pos[x.id] = py; else delete L.pos[x.id];
+  if (px) L.pos[y.id] = px; else delete L.pos[y.id];
+  // group membership belongs to the spot: each question takes the other's group along with its place
+  [x.group, y.group] = [y.group || null, x.group || null];
+  L.qs = qs;
+  log('question_reordered', `${where} · ${short(lTitle(x))} ↔ ${short(lTitle(y))}`);
+  afterLogic();
+}
+// the question node under the pointer while one question is dragged alone, other than the dragged one
+function swapTarget(e){
+  if (!nodeDrag || nodeDrag.g || !nodeDrag.id || nodeDrag.start.length > 1 || !L.qs.some(q => q.id === nodeDrag.id)) return null;
+  const hit = document.elementsFromPoint(e.clientX, e.clientY).map(el => el.closest?.('.ln[data-lnode]')).find(el => el && el.dataset.lnode !== nodeDrag.id);
+  return hit ? hit.dataset.lnode : null;
+}
+// the gap between two neighbouring questions under the pointer while one question is dragged alone:
+// dropping there moves the dragged question in between. Returns {before: id of the lower question, x, y, w} in canvas units.
+function insertTarget(e){
+  if (!nodeDrag || nodeDrag.g || !nodeDrag.id || nodeDrag.start.length > 1 || !L.qs.some(q => q.id === nodeDrag.id)) return null;
+  const r = $('#lStage').getBoundingClientRect(), z = L.zoom;
+  const x = (e.clientX - r.left) / z - L.ox, y = (e.clientY - r.top) / z - L.oy;
+  const rest = L.qs.filter(q => q.id !== nodeDrag.id && L.lastP[q.id]);
+  for (let i = 0; i + 1 < rest.length; i++){
+    const a = L.lastP[rest[i].id], b = L.lastP[rest[i + 1].id];
+    const top = a.y + NH, bottom = b.y;
+    if (bottom - top < 6) continue;
+    const l = Math.min(a.cx - a.w / 2, b.cx - b.w / 2), rr = Math.max(a.cx + a.w / 2, b.cx + b.w / 2);
+    if (x >= l - 20 && x <= rr + 20 && y >= top - 4 && y <= bottom + 4)
+      return {before: rest[i + 1].id, x: l, y: (top + bottom) / 2, w: rr - l};
+  }
+  return null;
+}
+function groupAt(e){
+  if (!nodeDrag || nodeDrag.g || !nodeDrag.id || !lq(nodeDrag.id)) return null;
+  const moving = new Set(nodeDrag.start.map(p => p.k));
+  const r = $('#lStage').getBoundingClientRect(), z = L.zoom;
+  const x = (e.clientX - r.left) / z - L.ox, y = (e.clientY - r.top) / z - L.oy;
+  for (const g of Object.keys(L.groups || {})){
+    const ps = L.qs.filter(q => q.group === g && !moving.has(q.id) && L.lastP[q.id]).map(q => L.lastP[q.id]); if (!ps.length) continue;
+    const x0 = Math.min(...ps.map(p => p.cx - p.w / 2)) - 14, x1 = Math.max(...ps.map(p => p.cx + p.w / 2)) + 14;
+    const y0 = Math.min(...ps.map(p => p.y)) - 30, y1 = Math.max(...ps.map(p => p.y)) + NH + 12;
+    if (x >= x0 && x <= x1 && y >= y0 && y <= y1) return g;
+  }
+  return null;
+}
+// dropped nodes join the group they land in, or leave their group when dropped outside it; members stay next to each other in the order
+function regroup(ids, g){
+  const qs = ids.map(lq).filter(Boolean), notes = [];
+  qs.forEach(q => {
+    if (q.group === g) return;
+    const old = q.group;
+    let rest = L.qs.filter(x => x !== q);
+    if (g){
+      const last = rest.map(x => x.group).lastIndexOf(g);
+      rest.splice(last + 1, 0, q);
+      notes.push(['group_member_added', `${lno(q)} → ${L.groups[g].name}`]);
+    } else {
+      const last = rest.map(x => x.group).lastIndexOf(old);
+      if (last >= 0) rest.splice(last + 1, 0, q); else rest = L.qs;
+      notes.push(['group_member_removed', `${lno(q)} ← ${L.groups[old].name}`]);
+    }
+    q.group = g || null; L.qs = rest;
+    if (old && !L.qs.some(x => x.group === old)) delete L.groups[old];
+  });
+  notes.forEach(([ev, d]) => log(ev, d));
+  return notes.length > 0;
+}
+let pbDrag = null;
+// drawing a connection from a question's + handle: canvas-unit start and pointer, and the node under the pointer
+let conn = null;
+function connOver(e){
+  const hit = document.elementsFromPoint(e.clientX, e.clientY).map(el => el.closest?.('.ln')).find(el => el && (el.dataset.lnode || el.dataset.lid) && (el.dataset.lnode || el.dataset.lid) !== conn.from);
+  const id = hit && (hit.dataset.lnode || hit.dataset.lid);
+  return id && id !== 'start' ? id : null;
+}
+function gapAt(e){
+  const r = $('#lStage').getBoundingClientRect(), z = L.zoom;
+  const x = (e.clientX - r.left) / z - L.ox, y = (e.clientY - r.top) / z - L.oy;
+  const qs = L.qs.filter(q => L.lastP[q.id]);
+  for (let i = 0; i + 1 < qs.length; i++){
+    const a = L.lastP[qs[i].id], b = L.lastP[qs[i + 1].id], top = a.y + NH, bottom = b.y;
+    if (bottom - top < 6) continue;
+    const l = Math.min(a.cx - a.w / 2, b.cx - b.w / 2), rr = Math.max(a.cx + a.w / 2, b.cx + b.w / 2);
+    if (x >= l - 40 && x <= rr + 40 && y >= top - 6 && y <= bottom + 6) return {after: qs[i].id, x: l, y: (top + bottom) / 2, w: rr - l};
+  }
+  return null;
+}
 function panStage(){ const st = $('#lStage'); if (st) st.style.transform = `translate(${L.px || 0}px,${L.py || 0}px)`; }
 
 function renderStruct(){
@@ -1760,7 +2063,7 @@ function renderStruct(){
     prevG = q.group;
     html += `<li class="s-row ${q.group ? 'in-grp' : ''} ${L.sel === q.id ? 'sel' : ''}" draggable="true" data-sq="${q.id}">
       <span class="drag" title="드래그해서 순서 변경">⋮⋮</span><input type="checkbox" data-scheck="${q.id}" ${L.checked.has(q.id) ? 'checked' : ''} aria-label="그룹으로 묶을 문항 선택">
-      ${ico(q.type)}<span class="t">${gno(q)}. ${esc(qTitle(q))}</span>${L.broken.has(q.id) ? '<span class="bk" title="연결이 끊겼어요">!</span>' : ''}</li>`;
+      ${ico(q.type)}<span class="t">${gno(q)}. ${esc(lTitle(q))}</span>${L.broken.has(q.id) ? '<span class="bk" title="연결이 끊겼어요">!</span>' : ''}</li>`;
     if (i < L.qs.length - 1) html += q.pageBreak
       ? `<li class="pb on"><span>여기서 페이지 나눔</span><button class="x" data-act="lUnbreak" data-id="${q.id}" title="페이지 나눔 지우기">×</button></li>`
       : `<li class="pb"><button class="add" data-act="lBreak" data-id="${q.id}">+ 여기서 페이지 나누기</button></li>`;
@@ -1773,12 +2076,12 @@ function renderStruct(){
 
 function targetOpts(q, cur, withNext){
   const i = lIdx(q.id), next = L.qs[i + 1], later = L.qs.slice(i + 1);
-  let h = withNext ? `<option value="next" ${cur === 'next' ? 'selected' : ''}>${next ? `다음 문항 (Q${i + 2} ${esc(short(qTitle(next)))})` : '응답 완료 (마지막 문항)'}</option>`
+  let h = withNext ? `<option value="next" ${cur === 'next' ? 'selected' : ''}>${next ? `다음 문항 (Q${i + 2} ${esc(short(lTitle(next)))})` : '응답 완료 (마지막 문항)'}</option>`
     : `<option value="" ${!cur ? 'selected' : ''}>이동할 곳 선택</option>`;
-  if (later.length) h += `<optgroup label="문항">${later.map((x, k) => `<option value="${x.id}" ${cur === x.id ? 'selected' : ''}>Q${i + k + 2} ${esc(short(qTitle(x)))}</option>`).join('')}</optgroup>`;
+  if (later.length) h += `<optgroup label="문항">${later.map((x, k) => `<option value="${x.id}" ${cur === x.id ? 'selected' : ''}>Q${i + k + 2} ${esc(short(lTitle(x)))}</option>`).join('')}</optgroup>`;
   h += `<optgroup label="엔딩">${Object.entries(END).map(([k, v]) => `<option value="${k}" ${cur === k ? 'selected' : ''}>${v.label}</option>`).join('')}</optgroup>`;
   // a target that now sits above this question stays visible so the broken link can be seen and fixed
-  if (cur && cur !== 'next' && !END[cur] && lIdx(cur) <= i) h += `<option value="${cur}" selected>${lq(cur) ? `Q${lIdx(cur) + 1} ${esc(short(qTitle(lq(cur))))} (앞 문항)` : '(삭제된 문항)'}</option>`;
+  if (cur && cur !== 'next' && !END[cur] && lIdx(cur) <= i) h += `<option value="${cur}" selected>${lq(cur) ? `Q${lIdx(cur) + 1} ${esc(short(lTitle(lq(cur))))} (앞 문항)` : '(삭제된 문항)'}</option>`;
   return h;
 }
 
@@ -1786,14 +2089,14 @@ function testPanelHTML(){
   const steps = L.test.steps, last = steps[steps.length - 1];
   const done = steps.filter(s => s.ans !== null && s.id !== 'broken').map(s => {
     const q = lq(s.id);
-    return `<li><b>${lno(q)} ${esc(short(qTitle(q)))}</b> → ${s.ans ? `"${esc(s.ans)}"` : '응답함'}</li>`;
+    return `<li><b>${lno(q)} ${esc(short(lTitle(q)))}</b> → ${s.ans ? `"${esc(s.ans)}"` : '응답함'}</li>`;
   }).join('');
   let body;
   if (END[last.id]) body = `<div class="t-end"><b>${END[last.id].label}</b>에 도착했어요<small>${END[last.id].desc}</small></div>`;
   else if (last.id === 'broken') body = `<div class="t-stop">${esc(last.from)}에서 갈 곳이 없어 멈췄어요. 로직을 확인해주세요.</div>`;
   else {
     const q = lq(last.id);
-    body = `<div class="t-q"><span class="qno">${lno(q)}</span>${esc(qTitle(q))}</div>
+    body = `<div class="t-q"><span class="qno">${lno(q)}</span>${esc(lTitle(q))}</div>
       ${answersOf(q).length ? answersOf(q).map(o => `<button class="t-opt" data-act="tAns" data-v="${esc(o)}">${esc(o)}</button>`).join('')
         : `<div class="t-fake">${esc(T[q.type].ph || '응답 입력')}</div><button class="t-opt" data-act="tAns" data-v="">응답하고 다음으로</button>`}`;
   }
@@ -1813,35 +2116,37 @@ function renderLPanel(){
   const condHTML = (r, c, k) => {
     const cq = lq(c.q) || q, vals = answersOf(cq);
     const qSel = `<select class="c-q" data-l="cq" data-k="${k}">${upto.map((x, j) =>
-      `<option value="${x.id}" ${x.id === c.q ? 'selected' : ''}>Q${j + 1} · ${esc(short(qTitle(x)))}</option>`).join('')}</select>`;
+      `<option value="${x.id}" ${x.id === c.q ? 'selected' : ''}>Q${j + 1} · ${esc(short(lTitle(x)))}</option>`).join('')}</select>`;
     const opSel = `<select class="c-op" data-l="op" data-k="${k}">${opsFor(cq).map(o => `<option value="${o}" ${o === c.op ? 'selected' : ''}>${OPS[o]}</option>`).join('')}</select>`;
     const val = vals.length
       ? `<select class="c-v ${c.val ? '' : 'empty-sel'}" data-l="cv" data-k="${k}"><option value="">참조값을 고르세요</option>${vals.map(v => `<option ${c.val === v ? 'selected' : ''}>${esc(v)}</option>`).join('')}</select>`
       : `<input class="c-v" data-l="cv" data-k="${k}" value="${esc(c.val)}" placeholder="참조값을 입력하세요">`;
     const join = k ? `<div class="join"><button class="${r.join === 'and' ? 'on' : ''}" data-act="lJoin" data-v="and">그리고 (AND)</button><button class="${r.join === 'or' ? 'on' : ''}" data-act="lJoin" data-v="or">또는 (OR)</button></div>` : '';
-    return `${join}<div class="cond2">${qSel}<div class="c-row">${opSel}${k ? `<button class="x" data-act="lDelCond" data-k="${k}" title="조건 지우기">×</button>` : ''}</div>${val}</div>`;
+    return `${join}<div class="cond2">${qSel}<div class="c-row">${opSel}</div>${val}${k ? `<button class="c-del" data-act="lDelCond" data-k="${k}" title="이 조건 지우기">삭제</button>` : ''}</div>`;
   };
-  const rules = q.rules.map((r, ri) => `<div class="rule2" data-rule="${r.id}">
+  // the rule (or the default path) whose line was clicked on the canvas is outlined
+  const rules = q.rules.map((r, ri) => `<div class="rule2 ${L.selRule === r.id ? 'rule-on' : ''} ${L.conflict?.has(r.id) ? 'conflict' : ''}" data-rule="${r.id}">
       <div class="rule-h"><button class="rule-fold" data-act="lFold">로직 #${ri + 1} <span>${r.open === false ? '⌄' : '⌃'}</span></button>
         <button class="x" data-act="lDelRule" title="로직 지우기">×</button></div>
+      ${L.conflict?.has(r.id) ? `<div class="rule-conf">로직 #${L.conflict.get(r.id)}과 조건이 겹쳐서 이 로직은 작동하지 않아요. 조건을 바꾸거나 지워주세요</div>` : ''}
       ${r.open === false ? '' : `<div class="rule-box"><div class="rb-t">조건</div>
         ${r.conds.map((c, k) => condHTML(r, c, k)).join('')}
         <button class="add-cond" data-act="lMore">⊕ 새로운 조건</button>
         <div class="rb-line"></div>
         <div class="lp-row"><span>이동하기</span><select data-l="target" class="${r.target ? '' : 'empty-sel'}">${targetOpts(q, r.target)}</select></div></div>`}
     </div>`).join('');
-  p.innerHTML = `<div class="lp-top"><div class="lp-h"><span class="qno">Q${gno(q)}</span>${esc(qTitle(q))}</div>
+  p.innerHTML = `<div class="lp-top"><div class="lp-h"><span class="qno">Q${gno(q)}</span>${esc(lTitle(q))}</div>
       <button class="lp-reset" data-act="lResetQ" title="이 문항 로직 초기화">⟳ 초기화</button></div>
     ${L.broken.has(q.id) ? '<div class="lp-warn">연결이 끊겼어요. 이동할 곳을 다시 골라주세요</div>' : ''}
-    <div class="lp-row lp-def2"><span>기본 이동</span><select data-l="def">${targetOpts(q, q.def ?? 'next', true)}</select></div>
+    <div class="lp-row lp-def2 ${L.selRule === 'def' ? 'on' : ''}"><span>기본 이동</span><select data-l="def">${targetOpts(q, q.def ?? 'next', true)}</select></div>
     <button class="add-rule2" data-act="lAddRule">⊕ 새로운 로직</button>
     ${rules}`;
 }
 function renderLogic(){
   renderStruct(); renderCanvas(); renderLPanel();
+  // the logic test button is gone; its code stays but nothing starts a test any more
   const tb = $('#tBtn');
-  tb.textContent = L.test ? '■ 테스트 끝내기' : '▶ 로직 테스트';
-  tb.classList.toggle('on', !!L.test);
+  if (tb){ tb.textContent = L.test ? '■ 테스트 끝내기' : '▶ 로직 테스트'; tb.classList.toggle('on', !!L.test); }
   if (L.test) requestAnimationFrame(() => document.querySelector('.ln.cur')?.scrollIntoView({block: 'center', inline: 'nearest', behavior: 'smooth'}));
 }
 
@@ -1864,9 +2169,22 @@ function testAnswer(v){
   if (!ok || END[next]) log('logic_test_end', `${ok ? END[next].label : '중간에 멈춤'} · ${steps.length - 1}문항 응답`);
 }
 
+// a group's questions always sit next to each other: any member found apart is pulled up to just after the others; empty groups go
+function tidyGroups(){
+  const seen = new Set(), out = [];
+  L.qs.forEach(q => {
+    if (!q.group){ out.push(q); return; }
+    if (seen.has(q.group)) return;
+    seen.add(q.group); out.push(...L.qs.filter(x => x.group === q.group));
+  });
+  if (out.some((q, i) => q !== L.qs[i])) L.qs = out;
+  Object.keys(L.groups).forEach(g => { if (!seen.has(g)) delete L.groups[g]; });
+}
 function afterLogic(){
+  tidyGroups();
+  const had = new Set(L.conflict?.keys() || []);
   const now = new Set(L.qs.filter(isBroken).map(q => q.id));
-  now.forEach(id => { if (!L.broken.has(id)) log('broken_link_shown', `${lno(lq(id))} · ${qTitle(lq(id))}`); });
+  now.forEach(id => { if (!L.broken.has(id)) log('broken_link_shown', `${lno(lq(id))} · ${lTitle(lq(id))}`); });
   L.broken = now;
   // scenario questions are found by their wording, so they count whether loaded as samples or typed in the editor
   const [a, b, c, d, , f, g] = SAMPLE.map(([, title]) => L.qs.find(q => q.title.trim() === title));
@@ -1879,6 +2197,7 @@ function afterLogic(){
     log('task_complete', `로직 시나리오 1~3 완료 · 구조와 로직 화면 진입 후 ${((Date.now() - L.t0) / 1000).toFixed(1)}초`);
   }
   renderLogic();
+  L.qs.forEach(q => q.rules.forEach((r, i) => { if (L.conflict.has(r.id) && !had.has(r.id)) log('logic_conflict_shown', `${lno(q)} · 로직 #${i + 1}이 로직 #${L.conflict.get(r.id)}과 겹침`); }));
 }
 
 function logicScreen(src){
@@ -1896,9 +2215,8 @@ function logicScreen(src){
       <aside class="s-panel" id="sPanel"></aside>
       <section class="lcenter">
         <div class="lcanvas">
-          <div class="lc-tools"><button class="btn" id="lGroupBtn" data-act="lGroup" title="Shift를 누른 채 문항을 눌러 여러 개 고른 뒤 묶어요">그룹 만들기</button>
+          <div class="lc-tools"><button class="btn" id="lGroupBtn" data-act="lGroup" title="Shift를 누른 채 문항을 눌러 여러 개 고른 뒤 묶어요 (Ctrl+G)">그룹 만들기</button>
             <button class="btn" id="lBreakBtn" data-act="lBreakSel" title="고른 문항 다음에서 페이지를 나눠요">페이지 나누기</button>
-            <button class="btn test" id="tBtn" data-act="tToggle">▶ 로직 테스트</button>
             <button class="btn" data-act="lResetAll">모든 로직 초기화</button><button class="btn" data-act="lArrange">⟲ 정렬하기</button></div>
           <div class="lscroll"><div class="lstage" id="lStage"></div></div>
           <div class="lc-empty" id="lEmpty" hidden><b>아직 문항이 없어요</b><span>문항 편집에서 만든 문항이 여기에 그대로 나타나요.</span>
@@ -1910,7 +2228,7 @@ function logicScreen(src){
       <aside class="lpanel" id="lPanel"></aside>
     </div></div>`;
   L.broken = new Set(L.qs.filter(isBroken).map(q => q.id));
-  renderLogic();
+  tidyGroups(); renderLogic();
   log('structure_view', src);
 }
 
@@ -1951,17 +2269,42 @@ function logicChange(el){
 
 function logicClick(e){
   if (suppressClick) return true;   // the click that ends a node drag shouldn't also select it
+  if (L.pbSel && !e.target.closest('.lpb')){ L.pbSel = null; renderCanvas(); }
+  const ed = e.target.closest('[data-efrom]');
+  if (ed && !L.test){
+    const q = lq(ed.dataset.efrom); if (!q) return true;
+    L.sel = q.id; L.selRule = ed.dataset.erule; L.gsel = null; L.checked.clear();
+    q.rules.forEach(r => { r.open = r.id === L.selRule; });
+    const ri = q.rules.findIndex(r => r.id === L.selRule);
+    log('logic_link_selected', `${lno(q)} · ${ri < 0 ? '기본 이동' : '로직 #' + (ri + 1)}`);
+    afterLogic();
+    requestAnimationFrame(() => document.querySelector('#lPanel .rule-on, #lPanel .lp-def2.on')?.scrollIntoView({block: 'nearest', behavior: 'smooth'}));
+    return true;
+  }
   const n = e.target.closest('[data-lnode]');
   if (n){
     if (L.test) return true;
     // Shift+click adds/removes the question from the set to group; a plain click just selects it
     if (e.shiftKey){
       const id = n.dataset.lnode;
+      // the question already picked with a plain click joins the Shift set too
+      if (L.sel && L.sel !== id && !L.checked.size && lq(L.sel)) L.checked.add(L.sel);
       L.checked.has(id) ? L.checked.delete(id) : L.checked.add(id);
       log('group_pick', `${lno(lq(id))} ${L.checked.has(id) ? '선택' : '해제'} · ${L.checked.size}개`);
       renderCanvas(); renderStruct(); return true;
     }
-    L.sel = n.dataset.lnode; afterLogic(); return true;
+    L.sel = n.dataset.lnode; L.gsel = null; L.selRule = null; afterLogic(); return true;
+  }
+  const box = e.target.closest('.lgrp');
+  if (box && !e.target.closest('button,input')){
+    L.gsel = box.dataset.lgrp; L.sel = null; L.checked.clear(); afterLogic(); return true;
+  }
+  // a click on empty canvas (not a drag) lets go of the picked question and every Shift-picked one
+  if (L.gsel && e.target.closest('.lscroll') && !e.target.closest('button,input,.lsel-bar')){ L.gsel = null; renderCanvas(); }
+  if ((L.checked.size || L.sel) && e.target.closest('.lscroll') && !e.target.closest('button,input,.ln,.lsel-bar')){
+    if (L.checked.size) log('group_pick', `바깥 클릭으로 ${L.checked.size}개 모두 해제`);
+    if (L.sel && lq(L.sel)) log('logic_question_deselected', `${lno(lq(L.sel))} · 바깥 클릭`);
+    L.checked.clear(); L.sel = null; L.selRule = null; afterLogic(); return true;
   }
   const row = e.target.closest('[data-sq]');
   if (row && !e.target.closest('input,button')){
@@ -2027,16 +2370,19 @@ function logicClick(e){
       renderStruct(); renderCanvas(); return true;
     }
     case 'lUncheck': L.checked.clear(); renderStruct(); renderCanvas(); return true;
-    case 'lSwap': {
-      const [x, y] = L.qs.filter(n => L.checked.has(n.id)), qs = [...L.qs], i = qs.indexOf(x), j = qs.indexOf(y);
-      [qs[i], qs[j]] = [qs[j], qs[i]];
-      // nodes the maker dragged by hand trade their spots too
-      const px = L.pos[x.id], py = L.pos[y.id];
-      if (py) L.pos[x.id] = py; else delete L.pos[x.id];
-      if (px) L.pos[y.id] = px; else delete L.pos[y.id];
-      L.qs = qs; L.checked.clear();
-      log('question_reordered', `로직 캔버스 · ${short(qTitle(x))} ↔ ${short(qTitle(y))}`);
+    case 'lDup': {
+      if (!q) return true;
+      // the copy lands right after the original (same group, same settings, same logic) and becomes the picked one
+      const before = snap('logic'), c = {...JSON.parse(JSON.stringify(q)), id: 'q' + (++seq)};
+      L.qs = [...L.qs.slice(0, L.qs.indexOf(q) + 1), c, ...L.qs.slice(L.qs.indexOf(q) + 1)];
+      L.sel = c.id; q.pageBreak = false;   // a page break under the original now sits under the copy
+      pushHist('logic', before);
+      log('question_duplicated', `${lno(q)} → ${lno(c)} (로직)`);
       afterLogic(); return true;
+    }
+    case 'lSwap': {
+      const [x, y] = L.qs.filter(n => L.checked.has(n.id));
+      L.checked.clear(); swapQ(x, y, '로직 캔버스'); return true;
     }
     case 'lGroup': {
       if (L.checked.size < 2){ toast('Shift를 누른 채 묶을 문항을 2개 이상 눌러주세요'); return true; }
@@ -2046,6 +2392,8 @@ function logicClick(e){
       const rest = L.qs.filter(x => !L.checked.has(x.id));
       rest.splice(first, 0, ...picked);   // members move next to each other at the first picked position
       picked.forEach(x => x.group = gid);
+      // a new group gets a page break right under it (once; after that the break moves only when dragged)
+      picked.forEach((x, k) => { x.pageBreak = k === picked.length - 1; });
       L.qs = rest; L.checked.clear();
       log('group_created', `${name} · ${picked.map(x => short(x.title)).join(', ')} (${picked.length}개)`);
       afterLogic(); return true;
@@ -2054,7 +2402,7 @@ function logicClick(e){
       const g = a.dataset.g;
       L.qs.forEach(x => { if (x.group === g) x.group = null; });
       log('group_deleted', `"${L.groups[g].name}" (문항은 그대로)`);
-      delete L.groups[g]; afterLogic(); return true;
+      delete L.groups[g]; L.gsel = null; afterLogic(); return true;
     }
   }
   return false;
@@ -2072,25 +2420,48 @@ document.addEventListener('pointerdown', e => {
     return;
   }
   if (e.button !== 0) return;
-  // a node in a group carries the whole group along (Alt+drag moves just that node); so does dragging the group's dashed box
-  const n = e.target.closest('.lstage .ln'), gb = !n && !e.target.closest('.lgrp-x') && e.target.closest('.lstage .lgrp');
+  const pl = e.target.closest('.ln-plus');
+  if (pl && L.lastP[pl.dataset.plus]){
+    e.preventDefault();
+    const p = L.lastP[pl.dataset.plus];
+    conn = {from: pl.dataset.plus, x0: p.cx + p.w / 2, y0: p.y + NH / 2, x: p.cx + p.w / 2, y: p.y + NH / 2, cx: e.clientX, cy: e.clientY, over: null, moved: false};
+    return;
+  }
+  const pb = e.target.closest('.lpb[data-pb]');
+  if (pb){ e.preventDefault(); pbDrag = {from: pb.dataset.pb, x: e.clientX, y: e.clientY, moved: false, gap: null}; return; }
+  // a node moves on its own, or with the other Shift-picked nodes when it is one of them; the group's dashed box moves the whole group
+  const n = e.target.closest('.lstage .ln'), gb = !n && !e.target.closest('.lgrp-x,.lgrp-name') && e.target.closest('.lstage .lgrp');
   if (n || gb){
     const id = n ? n.dataset.lnode || n.dataset.lid : null;
-    const g = gb ? gb.dataset.lgrp : !e.altKey && L.qs.find(x => x.id === id)?.group;
-    const ids = g ? L.qs.filter(x => x.group === g && L.lastP[x.id]).map(x => x.id) : [id];
-    nodeDrag = {id, g, start: ids.map(k => ({k, cx: L.lastP[k].cx, y: L.lastP[k].y})), x: e.clientX, y: e.clientY, moved: false, before: snap()};
+    const g = gb ? gb.dataset.lgrp : null;
+    const ids = g ? L.qs.filter(x => x.group === g && L.lastP[x.id]).map(x => x.id)
+      : L.checked.has(id) && L.checked.size > 1 ? L.qs.filter(x => L.checked.has(x.id) && L.lastP[x.id]).map(x => x.id) : [id];
+    nodeDrag = {id, g, orig: id && L.pos[id] ? {...L.pos[id]} : null, start: ids.map(k => ({k, cx: L.lastP[k].cx, y: L.lastP[k].y})), x: e.clientX, y: e.clientY, moved: false, before: snap()};
     L.frame = {ox: L.ox, oy: L.oy, W: L.W, H: L.H};
     return;
   }
   const sc = e.target.closest('.lscroll');
-  if (sc && !e.target.closest('button')){ pan = {sc, x: e.clientX, y: e.clientY, l: L.px || 0, t: L.py || 0, btn: 0, moved: false}; sc.classList.add('panning'); }
+  if (sc && !e.target.closest('button,input')){ pan = {sc, x: e.clientX, y: e.clientY, l: L.px || 0, t: L.py || 0, btn: 0, moved: false}; sc.classList.add('panning'); }
 });
 document.addEventListener('pointermove', e => {
+  if (conn){
+    if (!conn.moved && Math.hypot(e.clientX - conn.cx, e.clientY - conn.cy) < 4) return;
+    const r = $('#lStage').getBoundingClientRect(), z = L.zoom;
+    conn.moved = true; conn.x = (e.clientX - r.left) / z - L.ox; conn.y = (e.clientY - r.top) / z - L.oy;
+    conn.over = connOver(e); renderCanvas(); return;
+  }
+  if (pbDrag){
+    if (!pbDrag.moved && Math.hypot(e.clientX - pbDrag.x, e.clientY - pbDrag.y) < 4) return;
+    pbDrag.moved = true; pbDrag.gap = gapAt(e); renderCanvas(); return;
+  }
   if (nodeDrag){
     const dx = (e.clientX - nodeDrag.x) / L.zoom, dy = (e.clientY - nodeDrag.y) / L.zoom;
     if (!nodeDrag.moved && Math.hypot(dx, dy) < 4) return;
     nodeDrag.moved = true;
     nodeDrag.start.forEach(p => { L.pos[p.k] = {cx: p.cx + dx, y: p.y + dy}; });
+    nodeDrag.over = swapTarget(e);
+    nodeDrag.ins = nodeDrag.over ? null : insertTarget(e);
+    nodeDrag.grp = nodeDrag.over || nodeDrag.ins ? undefined : groupAt(e);
     renderCanvas();
     return;
   }
@@ -2101,6 +2472,44 @@ document.addEventListener('pointermove', e => {
   }
 });
 document.addEventListener('pointerup', () => {
+  if (conn){
+    const d = conn; conn = null;
+    if (d.moved){
+      suppressClick = true; setTimeout(() => { suppressClick = false; }, 0);
+      const q = lq(d.from), t = d.over;
+      if (q && t){
+        if (lq(t) && lIdx(t) <= lIdx(q.id)){ toast('앞 문항으로는 연결할 수 없어요. 아래 문항이나 엔딩으로 끌어주세요'); renderCanvas(); return; }
+        // a new connection is a rule with this question's answer still to be picked; the panel opens on it
+        const before = snap('logic');
+        const r = {id: 'r' + (++L.rseq) + Date.now().toString(36), conds: [{q: q.id, op: opsFor(q)[0], val: ''}], join: 'and', target: t, open: true};
+        q.rules.forEach(x => { x.open = false; }); q.rules.push(r);
+        L.sel = q.id; L.selRule = r.id; L.gsel = null; L.checked.clear();
+        pushHist('logic', before);
+        log('logic_link_drawn', `${lno(q)} → ${tLabel(t)}`);
+        afterLogic(); return;
+      }
+    }
+    renderCanvas(); return;
+  }
+  if (pbDrag){
+    const d = pbDrag; pbDrag = null;
+    if (d.moved){
+      suppressClick = true; setTimeout(() => { suppressClick = false; }, 0);
+      if (d.gap && d.gap.after !== d.from && lq(d.from) && lq(d.gap.after)){
+        const before = snap('logic');
+        lq(d.from).pageBreak = false; lq(d.gap.after).pageBreak = true;
+        pushHist('logic', before);
+        log('page_break_moved', `${lno(lq(d.from))} 다음 → ${lno(lq(d.gap.after))} 다음`);
+        L.pbSel = d.gap.after; afterLogic(); return;
+      }
+    } else {
+      // a click (no drag) picks the break, so Delete can remove it
+      L.pbSel = d.from; L.sel = null; L.gsel = null; L.checked.clear();
+      suppressClick = true; setTimeout(() => { suppressClick = false; }, 0);
+      afterLogic(); return;
+    }
+    renderCanvas(); return;
+  }
   if (nodeDrag){
     const d = nodeDrag; nodeDrag = null;
     const before = {ox: L.ox, oy: L.oy};
@@ -2108,6 +2517,30 @@ document.addEventListener('pointerup', () => {
     if (d.moved){
       pushHist('logic', d.before);
       suppressClick = true; setTimeout(() => { suppressClick = false; }, 0);
+      if (d.ins){
+        delete L.pos[d.id];   // let the layout place it in its new spot
+        const q = lq(d.id), from = L.qs.indexOf(q);
+        const rest = L.qs.filter(x => x !== q), at = rest.findIndex(x => x.id === d.ins.before);
+        rest.splice(at, 0, q); L.qs = rest;
+        // dropped between two members of one group it joins that group; anywhere else it is outside every group
+        const pv = rest[at - 1], nx = rest[at + 1];
+        q.group = pv?.group && pv.group === nx?.group ? pv.group : null;
+        if (L.qs.indexOf(q) !== from) log('question_reordered', `로직 캔버스 · 끌어서 사이에 넣기 · ${short(lTitle(q))} ${from + 1}번째 → ${L.qs.indexOf(q) + 1}번째`);
+        afterLogic();
+        L.px = (L.px || 0) - (L.ox - before.ox) * L.zoom; L.py = (L.py || 0) - (L.oy - before.oy) * L.zoom; panStage();
+        return;
+      }
+      if (d.over){
+        if (d.orig) L.pos[d.id] = d.orig; else delete L.pos[d.id];
+        swapQ(lq(d.id), lq(d.over), '로직 캔버스 · 끌어서 놓기');
+        L.px = (L.px || 0) - (L.ox - before.ox) * L.zoom; L.py = (L.py || 0) - (L.oy - before.oy) * L.zoom; panStage();
+        return;
+      }
+      if (!d.g && d.id && lq(d.id) && d.grp !== undefined && regroup(d.start.map(p => p.k), d.grp)){
+        afterLogic();
+        L.px = (L.px || 0) - (L.ox - before.ox) * L.zoom; L.py = (L.py || 0) - (L.oy - before.oy) * L.zoom; panStage();
+        return;
+      }
       if (d.g) log('logic_group_moved', `${L.groups[d.g]?.name || '그룹'} · ${d.start.length}개${d.id ? '' : ' (그룹 상자)'}`);
       else log('logic_node_moved', d.id === 'start' ? '시작' : END[d.id] ? END[d.id].label : `${lno(lq(d.id))} ${short(lq(d.id).title)}`);
       // the canvas origin may shift once the drag ends; scroll by the same amount so nothing jumps
@@ -2117,7 +2550,10 @@ document.addEventListener('pointerup', () => {
   }
   if (pan){
     pan.sc.classList.remove('panning');
-    if (pan.moved) log('logic_canvas_panned', PAN_BTN[pan.btn]);
+    if (pan.moved){
+      log('logic_canvas_panned', PAN_BTN[pan.btn]);
+      suppressClick = true; setTimeout(() => { suppressClick = false; }, 0);   // the click that ends a pan isn't a click on the canvas
+    }
     pan = null;
   }
 });
@@ -2199,6 +2635,42 @@ function commitFEdit(el){
   }
   renderFields();
 }
+
+function growBulk(el){ el.style.height = 'auto'; el.style.height = el.scrollHeight + 2 + 'px'; }
+document.addEventListener('input', e => { if (e.target.id === 'bulkText') growBulk(e.target); });
+
+/* editor options: drag the mark in front of an option up or down to change its place */
+let oDrag = null;
+document.addEventListener('pointerdown', e => {
+  const h = e.target.closest?.('[data-omove]'); if (!h || view !== 'editor' || e.button !== 0) return;
+  e.preventDefault();
+  const box = h.closest('.opts');
+  oDrag = {q: qOf(h), from: +h.dataset.omove, box, to: null};
+  h.closest('.opt-row').classList.add('o-src'); box.classList.add('o-dragging');
+});
+document.addEventListener('pointermove', e => {
+  if (!oDrag) return;
+  const rows = [...oDrag.box.querySelectorAll('.opt-row:not(.other-row)')];
+  rows.forEach(r => r.classList.remove('drop-before', 'drop-after'));
+  // the slot is the first row whose middle is below the pointer; past the last row means the end
+  let to = rows.findIndex(r => { const b = r.getBoundingClientRect(); return e.clientY < b.top + b.height / 2; });
+  if (to < 0) to = rows.length;
+  oDrag.to = to === oDrag.from || to === oDrag.from + 1 ? null : to;
+  if (oDrag.to === null) return;
+  if (to < rows.length) rows[to].classList.add('drop-before'); else rows[rows.length - 1].classList.add('drop-after');
+});
+document.addEventListener('pointerup', () => {
+  if (!oDrag) return;
+  const {q, from, to, box} = oDrag; oDrag = null;
+  box.classList.remove('o-dragging');
+  if (to === null || !q){ renderCards(); return; }
+  const before = snap(), at = to > from ? to - 1 : to;
+  const [o] = q.options.splice(from, 1); q.options.splice(at, 0, o);
+  if (q.photos){ const [p] = q.photos.splice(from, 1); q.photos.splice(at, 0, p); }
+  pushHist('editor', before);
+  log('option_reordered', `${qn(q)} · 선택지 ${from + 1} → ${at + 1}번째${o ? ` "${o}"` : ''}`);
+  renderCards();
+});
 
 /* editor cards: drag the top-centre handle up or down */
 let cDrag = null;
@@ -2346,6 +2818,7 @@ function renderBPanel(){
       <div class="f-row"><span>제출</span><input type="text" data-bl="submit" value="${esc(B.submit)}" aria-label="응답 제출 버튼 문구"></div></div>
     <div class="b-sec"><div class="b-t"><span class="ico">◎</span>로고</div>
       <div class="f-row"><label class="tog ${B.logo ? 'on' : ''}"><input type="checkbox" data-blogo ${B.logo ? 'checked' : ''}><span class="sw"></span>로고 보이기</label></div>
+      ${B.logo ? `<div class="f-row"><span>파일</span><label class="logo-up" title="PNG, JPG, SVG">${B.logoImg ? `<img src="${B.logoImg}" alt="">` : ''}<span>${B.logoImg ? '다른 파일로 바꾸기' : '로고 파일 올리기'}</span><input type="file" accept="image/*" data-blogofile hidden></label>${B.logoImg ? '<button class="logo-del" data-act="bLogoDel" title="올린 로고 지우기">삭제</button>' : ''}</div>` : ''}
       ${B.logo ? `<div class="f-row"><span>위치</span><div class="seg"><button class="${B.logoPos === 'left' ? 'on' : ''}" data-act="bLogoPos" data-v="left">왼쪽 위</button>
         <button class="${B.logoPos === 'center' ? 'on' : ''}" data-act="bLogoPos" data-v="center">가운데</button></div></div>` : ''}</div>
     <div class="b-reset"><button class="link-btn" data-act="bReset">↺ 기본값으로 되돌리기</button></div>`;
@@ -2365,9 +2838,10 @@ function renderPreview(){
   };
   // a sample you can poke at: options select, inputs take text, and the buttons open the full respondent preview
   $('#bPrev').innerHTML = `<div class="pv" style="background:${B.bg};color:${B.text};--pv-accent:${B.accent};--pv-ink:${ink(B.accent)};font-family:${FONTS[B.bodyFont].css}">
-    ${B.logo ? `<div class="pv-logo ${B.logoPos}"><span>LOGO</span></div>` : ''}
+    ${B.logo ? `<div class="pv-logo ${B.logoPos}">${B.logoImg ? `<img src="${B.logoImg}" alt="로고">` : '<span>LOGO</span>'}</div>` : ''}
     ${items.map(qHTML).join('')}
-    <button class="pv-btn" data-act="toPublish" title="응답자 화면 미리보기 열기" style="border-radius:${radius}px;font-size:${bSize}px;font-family:${FONTS[B.bodyFont].css}">${esc(B.next)}</button>  </div>`;
+    <div class="pv-btns">${[B.next, B.submit].map(t => `<button type="button" class="pv-btn" style="border-radius:${radius}px;font-size:${bSize}px;font-family:${FONTS[B.bodyFont].css}">${esc(t)}</button>`).join('')}</div>
+  </div>`;
 }
 
 function setColor(key, val, how){
@@ -2383,6 +2857,10 @@ function brandChange(el){
   if (el.dataset.bf){ B[el.dataset.bf] = el.value; log('font_changed', `${el.dataset.bf === 'titleFont' ? '제목' : '본문'} 글꼴 = ${FONTS[el.value].label}`); return renderBrand(); }
   if (el.dataset.bl){ log('button_label_changed', `${el.dataset.bl === 'next' ? '다음' : '응답 제출'} 버튼 = "${el.value}"`); return; }
   if ('blogo' in el.dataset){ B.logo = el.checked; log('logo_toggled', B.logo ? '켬' : '끔'); return renderBrand(); }
+  if ('blogofile' in el.dataset && el.files?.[0]){
+    const file = el.files[0];
+    loadLogo(file, url => { B.logoImg = url; log('logo_uploaded', `${file.name} · ${Math.round(file.size / 1024)}KB`); renderBrand(); });
+  }
 }
 
 function brandClick(a){
@@ -2392,6 +2870,7 @@ function brandClick(a){
     case 'bColor': if (B[a.dataset.k] === v) return true; B[a.dataset.k] = v; B.theme = null; log('color_changed', `${COLORN[a.dataset.k]} = ${v} (기본 색)`); break;
     case 'bSize': if (B.size === v) return true; B.size = v; log('font_size_changed', SIZES[v][0]); break;
     case 'bShape': if (B.shape === v) return true; B.shape = v; log('button_shape_changed', SHAPES[v][0]); break;
+    case 'bLogoDel': B.logoImg = null; log('logo_removed'); break;
     case 'bLogoPos': if (B.logoPos === v) return true; B.logoPos = v; log('logo_toggled', `위치 = ${v === 'left' ? '왼쪽 위' : '가운데'}`); break;
     case 'bUnify': log('font_changed', `문항별 글꼴 ${Object.keys(B.overrides).length}개 → 전체 글꼴로 맞춤`); B.overrides = {}; break;
     case 'bReset': newBrand(B.overrides); log('branding_reset'); break;
@@ -2418,9 +2897,9 @@ function openPreview(src){
   log('preview_opened', `${src} · 문항 ${E.qs.length}개`);
   renderPreviewLayer(true);
 }
-function closePreview(){
+function closePreview(how){
   if (!PV) return;
-  log('preview_closed', PV.end ? `${END[PV.end].label}까지 봄` : `Q${PV.start + 1}가 있는 페이지에서 닫음`);
+  log('preview_closed', `${PV.end ? `${END[PV.end].label}까지 봄` : `Q${PV.start + 1}가 있는 페이지에서 닫음`}${how ? ` · ${how}` : ''}`);
   PV = null; $('#pvLayer').innerHTML = '';
 }
 
@@ -2434,14 +2913,15 @@ function pvQ(q, tSize, b){
     ctl = hint + (q.variant === 'photo'
       ? `<div class="pvr-photos">${q.options.map((o, j) => { const v = o.trim() || `사진 ${j + 1}`;
           return `<button class="pvr-ph ${on(v) ? 'on' : ''}" data-pv="pick" data-q="${q.id}" data-v="${esc(v)}">${q.photos?.[j] ? `<img src="${q.photos[j]}" alt="">` : '<span class="pvr-noimg">사진</span>'}<span class="cap">${esc(v)}</span></button>`; }).join('')}</div>`
-      : opts.map(o => `<button class="pvr-opt ${on(o) ? 'on' : ''}" data-pv="pick" data-q="${q.id}" data-v="${esc(o)}"><i class="${multi ? 'sq' : ''}"></i>${esc(o)}</button>`).join(''));
+      : opts.map(o => `<button class="pvr-opt ${on(o) ? 'on' : ''}" data-pv="pick" data-q="${q.id}" data-v="${esc(o)}"><i class="${multi ? 'sq' : ''}"></i>${esc(o)}</button>`).join('')
+        + (q.other && on('기타') ? `<input class="pvr-in pvr-other" data-pv-other="${q.id}" value="${esc(PV.other?.[q.id] || '')}" placeholder="직접 입력해주세요" aria-label="기타 내용">` : ''));
   } else if (q.type === 'dropdown'){
     ctl = `<select class="pvr-in" data-pv-in="${q.id}"><option value="">선택하세요</option>${opts.map(o => `<option ${a === o ? 'selected' : ''}>${esc(o)}</option>`).join('')}</select>`;
   } else if (q.type === 'rank'){
     ctl = `<div class="pvr-hint">누르는 순서대로 순위가 매겨져요. 다시 누르면 빠져요.</div>` + opts.map(o => { const r = (a || []).indexOf(o);
       return `<button class="pvr-opt rank ${r >= 0 ? 'on' : ''}" data-pv="rank" data-q="${q.id}" data-v="${esc(o)}"><b>${r >= 0 ? r + 1 : ''}</b>${esc(o)}</button>`; }).join('');
   } else if (q.type === 'scale'){
-    ctl = `<div class="pvr-scale"><small>전혀 아니다</small>${['1', '2', '3', '4', '5'].map(v => `<button class="${a === v ? 'on' : ''}" data-pv="pick" data-q="${q.id}" data-v="${v}">${v}</button>`).join('')}<small>매우 그렇다</small></div>`;
+    ctl = `<div class="pvr-scale"><small>${esc(q.scaleLo?.trim() || '전혀 아니다')}</small>${scaleVals(q).map(v => `<button class="${a === v ? 'on' : ''}" data-pv="pick" data-q="${q.id}" data-v="${v}">${v}</button>`).join('')}<small>${esc(q.scaleHi?.trim() || '매우 그렇다')}</small></div>`;
   } else if (q.type === 'table'){
     const rows = ['강의 내용', '진행 방식'], cols = ['그렇다', '보통', '아니다'];
     ctl = `<div class="pvr-table"><span></span>${cols.map(c => `<span>${c}</span>`).join('')}${rows.map(r => `<span class="rh">${r}</span>${cols.map(c =>
@@ -2454,13 +2934,14 @@ function pvQ(q, tSize, b){
       : `<input class="pvr-in" data-pv-in="${q.id}" value="${esc(a || '')}" placeholder="${ph}" ${q.type === 'number' || q.type === 'phone' ? 'inputmode="numeric"' : ''}>`;
     if (q.type === 'phone') ctl = `<div class="pvr-cc"><select class="pvr-in" data-pv-cc="${q.id}" aria-label="국가 번호">${ccOpts(pcc)}</select>${ctl}</div>`;
   } else if (q.type === 'date' || q.type === 'time'){
-    const lim = q.type === 'date' && q.dMin && q.dMax ? ` min="${q.dMin}" max="${q.dMax}"` : '';
+    const lim = q.type === 'date' ? (q.dMin && q.dMax ? ` min="${q.dMin}" max="${q.dMax}"` : '')
+      : (time24(q, 1) ? ` min="${time24(q, 1)}"` : '') + (time24(q, 2) ? ` max="${time24(q, 2)}"` : '');
     ctl = `<input class="pvr-in" type="${q.type}" data-pv-in="${q.id}" value="${esc(a || '')}"${lim}>`;
   } else if (q.type === 'capture' || q.type === 'upload'){
-    const acc = q.variant === 'video' ? 'video/*' : q.variant === 'file' ? '' : 'image/*';
-    ctl = `<label class="pvr-file">${a ? `✓ ${esc(a)}` : esc(VAR_TEXT[q.type]?.[q.variant] || t.fake)}<input type="file" hidden data-pv-file="${q.id}" ${acc ? `accept="${acc}"` : ''}></label>`;
+    const acc = q.type === 'upload' ? '' : q.variant === 'video' ? 'video/*' : 'image/*';
+    ctl = (q.type === 'upload' ? `<div class="pvr-hint">최대 ${mbOf(q)}MB</div>` : '') + `<label class="pvr-file">${a ? `✓ ${esc(a)}` : esc(VAR_TEXT[q.type]?.[q.variant] || t.fake)}<input type="file" hidden data-pv-file="${q.id}" ${acc ? `accept="${acc}"` : ''}></label>`;
   } else if (q.type === 'privacy'){
-    ctl = `<label class="pvr-agree"><input type="checkbox" data-pv-chk="${q.id}" ${a ? 'checked' : ''}>개인정보 수집·이용에 동의합니다</label>`;
+    ctl = `<div class="pvr-hint">개인정보 수집·이용에 동의하시나요?</div>` + AGREE.map(v => `<button class="pvr-opt ${a === v ? 'on' : ''}" data-pv="pick" data-q="${q.id}" data-v="${v}"><i></i>${v}</button>`).join('');
   } else {   // pay
     ctl = `<button class="pvr-opt" data-pv="pay" data-q="${q.id}">${a ? '✓ 결제 완료 (미리보기)' : '간편결제로 결제하기'}</button>`;
   }
@@ -2491,12 +2972,12 @@ function renderPreviewLayer(top){
       `<div class="pvr-nav">${PV.hist.length ? '<button class="pvr-prev" data-pv="prev">← 이전</button>' : ''}
         <button class="pvr-btn" data-pv="next" style="border-radius:${radius}px">${esc(last ? b.submit : b.next)}</button></div>`;
   }
-  $('#pvLayer').innerHTML = `<div class="pvx" role="dialog" aria-label="응답자 화면 미리보기">
-    <div class="pvx-bar"><b class="pvx-t">미리보기</b><span class="muted">응답자에게 보이는 화면이에요. 로직과 필수 응답도 그대로 동작해요.</span><span class="spacer"></span>
+  $('#pvLayer').innerHTML = `<div class="pvx"><div class="pvx-box ${PV.device}" role="dialog" aria-modal="true" aria-label="응답자 화면 미리보기">
+    <div class="pvx-bar"><b class="pvx-t">미리보기</b><span class="muted pvx-hint">응답자에게 보이는 화면이에요. 로직과 필수 응답도 그대로 동작해요.</span><span class="spacer"></span>
       <div class="pvx-dev"><button class="${PV.device === 'desktop' ? 'on' : ''}" data-pv="dev" data-v="desktop">${ICN.monitor}PC</button><button class="${PV.device === 'mobile' ? 'on' : ''}" data-pv="dev" data-v="mobile">${ICN.phone}모바일</button></div>
       <button class="pvx-txt" data-pv="restart">${ICN.restart}처음부터</button><button class="ib" data-pv="close" title="닫기">${ICN.close}</button></div>
     <div class="pvx-stage"><div class="pvr ${PV.device}" style="background:${b.bg};color:${b.text};--pv-accent:${b.accent};--pv-ink:${ink(b.accent)};font-family:${FONTS[b.bodyFont].css};font-size:${bSize}px">
-      ${b.logo ? `<div class="pv-logo ${b.logoPos}"><span>LOGO</span></div>` : ''}${body}</div></div></div>`;
+      ${b.logo ? `<div class="pv-logo ${b.logoPos}">${b.logoImg ? `<img src="${b.logoImg}" alt="로고">` : '<span>LOGO</span>'}</div>` : ''}${body}</div></div></div></div>`;
   $('#pvLayer .pvx-stage').scrollTop = keep;
 }
 
@@ -2504,6 +2985,7 @@ function pvCheck(q){
   const a = PV.ans[q.id];
   const empty = a === undefined || a === '' || (Array.isArray(a) && !a.length) || (q.type === 'table' && Object.keys(a || {}).length < 2);
   if (empty) return q.required ? '필수 문항이에요' : null;
+  if (q.type === 'choice' && q.other && (Array.isArray(a) ? a.includes('기타') : a === '기타') && !PV.other?.[q.id]?.trim()) return '기타 내용을 입력해주세요';
   if (q.type === 'choice' && q.selMode !== 'one'){
     const n = a.length, k = q.selCount;
     if (q.selMode === 'exact' && n !== k) return `${k}개를 골라주세요 (지금 ${n}개)`;
@@ -2548,11 +3030,12 @@ function pvNext(){
   // keep editor shortcuts and handlers (undo, drag, card clicks) out of the preview
   ['click', 'input', 'change', 'keydown', 'dblclick', 'paste', 'drop', 'focusin', 'focusout'].forEach(t => pvl.addEventListener(t, e => e.stopPropagation()));
   pvl.addEventListener('click', e => {
+    if (e.target.classList.contains('pvx') && PV){ closePreview('바깥 클릭'); return; }   // the dimmed area around the popup closes it
     const el = e.target.closest('[data-pv]'); if (!el || !PV) return;
     const q = el.dataset.q && qById(el.dataset.q), v = el.dataset.v;
     switch (el.dataset.pv){
       case 'close': closePreview(); return;
-      case 'restart': Object.assign(PV, {start: 0, ans: {}, hist: [], err: {}, end: null}); log('preview_restarted'); renderPreviewLayer(true); return;
+      case 'restart': Object.assign(PV, {start: 0, ans: {}, other: {}, hist: [], err: {}, end: null}); log('preview_restarted'); renderPreviewLayer(true); return;
       case 'dev': PV.device = v; renderPreviewLayer(); return;
       case 'prev': PV.start = PV.hist.pop(); PV.err = {}; renderPreviewLayer(true); return;
       case 'next': pvNext(); return;
@@ -2572,6 +3055,7 @@ function pvNext(){
     renderPreviewLayer();
   });
   pvl.addEventListener('input', e => {
+    if (e.target.dataset.pvOther && PV){ (PV.other ||= {})[e.target.dataset.pvOther] = e.target.value; return; }
     const id = e.target.dataset.pvIn; if (!id || !PV) return;
     PV.ans[id] = e.target.value;
     if (PV.err[id]){ delete PV.err[id]; const box = e.target.closest('.pvr-q'); box.classList.remove('has-err'); box.querySelector('.pvr-err')?.remove(); }
@@ -2582,7 +3066,11 @@ function pvNext(){
     if (el.dataset.pvCc){ (PV.cc ||= {})[el.dataset.pvCc] = el.value; delete PV.err[el.dataset.pvCc]; renderPreviewLayer(); return; }
     const id = el.dataset.pvChk || el.dataset.pvFile; if (!id) return;
     if (el.dataset.pvChk) PV.ans[id] = el.checked ? '동의' : undefined;
-    else if (el.files?.[0]) PV.ans[id] = el.files[0].name;
+    else if (el.files?.[0]){
+      const fq = qById(id), file = el.files[0];
+      if (fq?.type === 'upload' && file.size > mbOf(fq) * 1024 * 1024){ PV.err[id] = `파일이 너무 커요. ${mbOf(fq)}MB 이하로 올려주세요`; el.value = ''; renderPreviewLayer(); return; }
+      PV.ans[id] = file.name;
+    }
     delete PV.err[id]; renderPreviewLayer();
   });
   pvl.addEventListener('keydown', e => { if (e.key === 'Escape') closePreview(); });
@@ -2650,6 +3138,15 @@ function hold(e){
 document.addEventListener('keydown', e => {
   const k = e.key.toLowerCase();
   if ((e.ctrlKey || e.metaKey) && k === 's' && CUR){ e.preventDefault(); manualSave('Ctrl+S'); return; }
+  // Ctrl+G on the logic canvas groups the Shift-picked questions, same as the '그룹 만들기' button
+  if ((e.ctrlKey || e.metaKey) && !e.shiftKey && k === 'g' && view === 'logic' && L && !L.test && !PV && !isText(e.target)){
+    e.preventDefault();
+    const n = L.checked.size;
+    const act = document.createElement('button'); act.dataset.act = 'lGroup';
+    logicClick({target: act, shiftKey: false});
+    if (n >= 2) log('shortcut_used', 'Ctrl+G 그룹 만들기');
+    return;
+  }
   if (!(e.ctrlKey || e.metaKey) || (k !== 'z' && k !== 'y')) return;
   if (isText(e.target)) return;   // inside a text field, the browser's own text undo applies
   e.preventDefault();
@@ -2742,6 +3239,12 @@ document.addEventListener('change', e => {
     log('phone_country_set', `${qn(q)} · ${ccOf(from)[1]} ${from} → ${ccOf(q.cc)[1]} ${q.cc}`);
     renderCards(); renderPanel(); return;
   }
+  if (el.dataset && 'mb' in el.dataset && E){
+    const q = qOf(el); if (!q) return;
+    const from = mbOf(q), to = Math.min(1000, Math.max(1, Math.round(+el.value) || from));
+    if (to !== from){ q.maxMB = to; log('upload_limit_set', `${qn(q)} · ${from}MB → ${to}MB`); }
+    renderCards(); renderPanel(); return;
+  }
   if (el.dataset?.sdesc){ log('survey_header_typed', `${el.dataset.sdesc === 'stitle' ? '제목' : '설명'}: "${el.value}"`); return; }
   if (el.dataset?.end){ log('ending_typed', `엔딩 ${+el.closest('[data-en]').dataset.en + 1} ${el.dataset.end === 'title' ? '제목' : '문구'}: "${el.value}"`); return; }
   if (view === 'logic') return logicChange(el);
@@ -2757,10 +3260,17 @@ document.addEventListener('change', e => {
     });
     return;
   }
+  if (/^t[HM]\d?$/.test(el.dataset.f || '')){
+    const q = qOf(el), d = el.value.replace(/\D/g, '');
+    const v = !d ? '' : el.dataset.f.startsWith('tH') ? String(Math.min(12, Math.max(1, +d))) : String(Math.min(59, +d)).padStart(2, '0');
+    if (q){ q[el.dataset.f] = v; document.querySelectorAll(`#card-${q.id} [data-f="${el.dataset.f}"], #rpanel [data-f="${el.dataset.f}"]`).forEach(o => { o.value = v; }); }
+  }
+  // range edits refresh the panel hint and the range shown on the card
+  if (/^t(H|M|Ap)[12]$/.test(el.dataset.f || '')){ renderPanel(); renderCards(); }
   if (el.dataset.f){
     if (el.value === focusVal) return;
     const q = qOf(el); if (!q) return;
-    const name = {title:'질문', desc:'설명', placeholder:'입력 안내 문구', fieldName:'필드 제목'}[el.dataset.f] || `선택지 ${+el.dataset.i + 1}`;
+    const name = {title:'질문', desc:'설명', placeholder:'입력 안내 문구', fieldName:'필드 제목', scaleLo:'척도 낮은 쪽 이름', scaleHi:'척도 높은 쪽 이름', tAp:'오전·오후', tH:'시', tM:'분', tAp1:'시작 오전·오후', tH1:'시작 시', tM1:'시작 분', tAp2:'끝 오전·오후', tH2:'끝 시', tM2:'끝 분'}[el.dataset.f] || `선택지 ${+el.dataset.i + 1}`;
     log('question_typed', `${qn(q)} · ${name}: "${el.value}"`);
     focusVal = el.value;
     if (el.dataset.f === 'opt' && q.selMode !== 'one') renderCards();
@@ -2799,6 +3309,43 @@ document.addEventListener('keydown', e => {
     if (e.key === 'Escape') el.value = el.dataset.orig;
     commitFEdit(el); return;
   }
+  // logic canvas: Delete removes the picked question (or every Shift-picked one); Ctrl+Z brings it back
+  if (e.key === 'Delete' && view === 'logic' && L && !L.test && !PV && !$('#confirmLayer').innerHTML
+      && !el.closest?.('input,textarea,select,[contenteditable]')){
+    if (L.selRule && lq(L.sel)){
+      e.preventDefault();
+      const q = lq(L.sel);
+      if (L.selRule === 'def'){ toast('기본 연결은 지울 수 없어요. 오른쪽 패널의 기본 이동에서 갈 곳을 바꿔주세요'); return; }
+      const ri = q.rules.findIndex(r => r.id === L.selRule); if (ri < 0) return;
+      const before = snap('logic'), r = q.rules[ri];
+      q.rules.splice(ri, 1); L.selRule = null;
+      pushHist('logic', before);
+      log('logic_link_deleted', `${lno(q)} · 로직 #${ri + 1} → ${r.target ? tLabel(r.target) : '(갈 곳 없음)'} (Delete 키)`);
+      afterLogic(); return;
+    }
+    if (L.pbSel && lq(L.pbSel)){
+      e.preventDefault();
+      const before = snap('logic'), q = lq(L.pbSel);
+      q.pageBreak = false; L.pbSel = null;
+      pushHist('logic', before);
+      log('page_break_removed', `${lno(q)} 다음 (Delete 키)`);
+      afterLogic(); return;
+    }
+    const gone = L.checked.size ? L.qs.filter(q => L.checked.has(q.id)) : L.qs.filter(q => q.id === L.sel);
+    if (!gone.length) return;
+    e.preventDefault();
+    const before = snap('logic'), ids = new Set(gone.map(q => q.id));
+    const notes = gone.map(q => `${lno(q)} · ${T[q.type].label}${q.title ? ` "${q.title}"` : ''} (로직 · Delete 키)`);   // numbers read before they shift
+    L.qs = L.qs.filter(q => !ids.has(q.id));
+    ids.forEach(id => delete L.pos[id]);
+    Object.keys(L.groups).forEach(g => { if (!L.qs.some(q => q.group === g)) delete L.groups[g]; });
+    L.checked.clear(); L.sel = null;
+    if (ids.has(E.cur)) E.cur = L.qs[0]?.id ?? null;
+    if (!L.qs.length) E.pk = {open: true, mode: 'first', tab: 'frequent', q: '', sel: null};
+    pushHist('logic', before);
+    notes.forEach(n => log('question_deleted', n));
+    afterLogic(); return;
+  }
   if (e.key === 'Escape'){
     $('#confirmLayer').innerHTML = ''; toggleSettings(false);
     if (E && view === 'editor' && E.pk.open && E.pk.mode === 'add') closePk('Esc');
@@ -2810,6 +3357,11 @@ document.addEventListener('keydown', e => {
 /* ---------- clicks ---------- */
 document.addEventListener('click', e => {
   if ($('.set-pop') && !e.target.closest('.set-pop,[data-act="settings"]')) toggleSettings(false);
+  // editor: a click on the grey space around the cards lets go of the picked question
+  if (view === 'editor' && E?.cur && e.target.closest('.ed-grid') && !e.target.closest('.qwrap,.rpanel,.fields,.sblock,.ending,button,input,textarea,select,label,a')){
+    const was = curQ(); if (was) log('question_deselected', `${qn(was)} · 바깥 회색 영역`);
+    E.cur = null; E.menuFor = null; renderCards(); renderFields(); renderPanel(); return;
+  }
   const pj = e.target.closest('[data-proj]');
   if (pj){ openProject(pj.dataset.proj); return; }
   const f = e.target.closest('[data-format]');
@@ -2883,7 +3435,7 @@ document.addEventListener('click', e => {
     case 'toEdit': if (!E) newEditor(); editor(); break;
     case 'backLogic': logicScreen('준비 중 화면에서 돌아옴'); break;
     case 'backBrand': brandScreen('준비 중 화면에서 돌아옴'); break;
-    case 'toPublish': openPreview(a.closest('#bPrev') ? '브랜딩 샘플 버튼' : '브랜딩 다음 단계 버튼'); break;
+    case 'toPublish': openPreview('브랜딩 다음 단계 버튼'); break;
     case 'bpvOpt': a.closest('.pv-q').querySelectorAll('.pv-opt').forEach(o => o.classList.toggle('on', o === a)); break;
     case 'preview': openPreview(a.dataset.src); break;
     case 'home': log('back_home', a.dataset.src); picked = null; home(); break;
@@ -2959,6 +3511,8 @@ document.addEventListener('click', e => {
       renderCards();
       document.querySelector(`#card-${q.id} [data-f="opt"][data-i="${q.options.length - 1}"]`)?.focus();
       break;
+    case 'addOther': q.other = true; log('option_other_added', qn(q)); renderCards(); break;
+    case 'delOther': q.other = false; log('option_other_deleted', qn(q)); renderCards(); break;
     case 'delOpt': {
       const i = +a.dataset.i, txt = q.options[i];
       q.options.splice(i, 1); q.photos?.splice(i, 1); if (!q.options.length) q.options = [''];
@@ -2993,6 +3547,12 @@ document.addEventListener('click', e => {
       renderCards(); renderPanel(); break;
     }
     case 'calClear': q.dMin = q.dMax = null; log('date_range_cleared', qn(q)); renderCards(); renderPanel(); break;
+    case 'scStep': {
+      const from = q.scaleMax || 5, to = Math.min(10, Math.max(2, from + +a.dataset.v)); if (to === from) break;
+      const before = snap(); q.scaleMax = to; pushHist('editor', before);
+      log('scale_range_set', `${qn(q)} · 1~${from} → 1~${to}`);
+      renderCards(); renderPanel(); break;
+    }
     case 'inc': setCond(q, 'selCount', q.selCount + 1); break;
     case 'dec': setCond(q, 'selCount', q.selCount - 1); break;
     case 'dup': {
