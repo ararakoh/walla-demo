@@ -1,4 +1,8 @@
 <title>왈라 제작 흐름 데모</title>
+<script>
+// design version: raise to v2, v3 … whenever the design changes; sent with every Amplitude event as "version"
+const DEMO_VERSION = 'v1';
+</script>
 <!-- Amplitude SDK files loaded directly: the key-specific loader script starts Amplitude itself, with autocapture on, whenever init has not run yet -->
 <script src="https://cdn.amplitude.com/libs/analytics-browser-2.42.4-min.js.gz" integrity="sha384-lKBFu+lrE+l3rHaNqttqd3e3ga1kwCKyeO1JiVVq2NlrrkHTdt8SobN3bqqLSKSw" crossorigin="anonymous"></script>
 <script src="https://cdn.amplitude.com/libs/plugin-session-replay-browser-1.32.1-min.js.gz" integrity="sha384-hWmXGSUzyw8M7w4rJJlIFGzPeQ65AgJf1YvcH6h4TZPbl20L+aSsZmLLdaPw+J7m" crossorigin="anonymous"></script>
@@ -16,9 +20,9 @@
 .pid-chip button{height:24px;padding:0 10px;border:0;border-radius:12px;background:#eef1f5;color:#4a525d;font:inherit;font-size:12px;cursor:pointer}
 </style>
 <script>
-/* Amplitude: every event in 기록 보기 is sent with the same name and fields, under the participant code as user ID.
+/* Amplitude: every logged event is sent with the same name and fields, under the participant code as user ID.
    Events logged before the code is entered wait in a queue and keep their original time.
-   Amplitude only starts once a real code is in; the code TEST keeps everything in 기록 보기 and sends nothing. */
+   Amplitude only starts once a real code is in; the code TEST sends nothing. */
 const AMP_KEY = 'a9ca0dffe57eca0d030f2c407f2ed92f';
 const AMP_TEST = 'TEST';
 let ampPid = null, ampLastReal = null, ampReady = false;
@@ -43,6 +47,7 @@ function ampStart(){
 }
 function ampTrack(ev, props){
   if (!window.amplitude || ampPid === AMP_TEST) return;
+  props = {...props, version: DEMO_VERSION};
   if (!ampPid){ ampQueue.push([ev, props, Date.now()]); return; }
   window.amplitude.track(ev, props);
 }
@@ -446,6 +451,13 @@ button.pcard:hover{border-color:var(--primary-line);box-shadow:0 2px 8px rgba(20
 .bulk-row .btn{height:30px}
 .ph-label{margin-top:12px;font-size:12px;color:var(--sub)}
 .ph{width:100%;margin-top:6px;height:42px;border-radius:8px;border:1px dashed var(--line);background:var(--bg);padding:0 12px;outline:none}
+/* phone: country code dropdown in front of the number */
+.cc-row{display:flex;gap:8px;align-items:flex-end}
+.cc-row .ph{flex:1;min-width:0}
+.cc-row select.ph.cc{flex:none;width:auto;min-width:118px;border-style:solid;cursor:pointer;color:var(--text)}
+.pvr-cc{display:flex;gap:8px}
+.pvr-cc select.pvr-in{flex:none;width:auto;min-width:118px;cursor:pointer}
+.pvr-cc input.pvr-in{flex:1;min-width:0}
 .ph.tall{height:90px;padding-top:10px;resize:none}
 .ph:focus{border-style:solid;border-color:var(--primary-line);background:var(--surface)}
 .fake{margin-top:12px;min-height:42px;border-radius:8px;background:var(--bg);color:#9aa1ab;display:flex;align-items:center;padding:0 12px;font-size:13px}
@@ -512,6 +524,7 @@ button.pcard:hover{border-color:var(--primary-line);box-shadow:0 2px 8px rgba(20
 .rp-in::placeholder{color:#a9b0ba}
 .rp-sel{cursor:pointer}
 .rp-h{font-size:14px;font-weight:700;margin:22px 0 10px}
+.rp-h.first{margin-top:2px}
 .rp-row{display:flex;align-items:center;gap:8px;min-height:34px;font-size:13.5px;cursor:pointer}
 .rp-row > span:first-child{flex:1;display:flex;align-items:center;gap:5px}
 .rp-row.locked{color:var(--sub)}
@@ -524,6 +537,23 @@ button.pcard:hover{border-color:var(--primary-line);box-shadow:0 2px 8px rgba(20
 .rp-seg button{flex:1;height:34px;border-radius:6px;font-size:13.5px;color:var(--sub)}
 .rp-seg button.on{background:var(--surface);color:var(--primary);font-weight:700;box-shadow:0 1px 2px rgba(0,0,0,.08)}
 .rp-seg.sm button{height:28px;font-size:12.5px}
+/* date question: a month calendar in the right panel; click a start day, then an end day */
+.rcal{border:1px solid var(--line);border-radius:12px;padding:10px 10px 8px}
+.rcal-h{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px}
+.rcal-h b{font-size:13.5px}
+.rcal-h button{width:28px;height:28px;border-radius:7px;color:var(--sub);font-size:15px}
+.rcal-h button:hover{background:var(--chip)}
+.rcal-g{display:grid;grid-template-columns:repeat(7,1fr);gap:2px 0;text-align:center}
+.rcal-g .wd{font-size:11.5px;color:var(--muted);padding:4px 0}
+.rcal-g .wd.sun{color:#e5484d}
+.rcal-g button{height:32px;font-size:13px;border-radius:8px;color:var(--text)}
+.rcal-g button:hover{background:var(--chip)}
+.rcal-g button.out{color:#c4c9d1}
+.rcal-g button.today{font-weight:700;color:var(--primary)}
+.rcal-g button.in{background:var(--primary-soft);border-radius:0}
+.rcal-g button.edge{background:var(--primary);color:#fff;font-weight:700;border-radius:8px}
+.rcal-f{display:flex;align-items:center;justify-content:space-between;margin-top:8px;font-size:12.5px;color:var(--sub)}
+.rcal-f button{color:var(--primary);font-size:12.5px;font-weight:600}
 .rp-many{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-top:8px;font-size:13px}
 .rp-many .rp-seg{flex:1 1 100%}
 .rp-box .hint{font-size:12px;color:var(--sub);margin-top:6px}
@@ -585,7 +615,6 @@ button.pcard:hover{border-color:var(--primary-line);box-shadow:0 2px 8px rgba(20
 .custom-note{font-size:12px;color:var(--sub);margin:0 4px 10px}
 
 /* log */
-.log-btn{position:fixed;right:calc(20px + env(safe-area-inset-right,0px));bottom:calc(20px + env(safe-area-inset-bottom,0px));z-index:30;height:40px;padding:0 16px;border-radius:20px;background:var(--dark);color:#fff;font-size:13px;box-shadow:0 4px 14px rgba(0,0,0,.18)}
 .log{position:fixed;right:calc(20px + env(safe-area-inset-right,0px));bottom:calc(72px + env(safe-area-inset-bottom,0px));z-index:50;width:min(680px,calc(100vw - 40px));max-height:70vh;background:var(--surface);border:1px solid var(--line);border-radius:14px;box-shadow:0 12px 40px rgba(0,0,0,.18);display:flex;flex-direction:column}
 .log-h{display:flex;align-items:center;gap:8px;padding:12px 14px;border-bottom:1px solid var(--line2)}
 .log-h b{flex:1}
@@ -639,7 +668,7 @@ button.pcard:hover{border-color:var(--primary-line);box-shadow:0 2px 8px rgba(20
 
 .lcenter{display:flex;flex-direction:column;min-height:0;min-width:0}
 .lcanvas{flex:1;min-height:0;position:relative;border:1px solid var(--line);border-radius:12px;background-color:var(--surface);background-image:radial-gradient(#d9dde4 1px,transparent 1px);background-size:16px 16px;overflow:hidden}
-.lscroll{position:absolute;inset:0;overflow:auto;padding:56px 24px 60px;cursor:grab;touch-action:none}
+.lscroll{position:absolute;inset:0;overflow:hidden;padding:56px 24px 60px;cursor:grab;touch-action:none}
 .lscroll.panning{cursor:grabbing}
 .lstage{position:relative;margin:0 auto;user-select:none}
 .lstage .ln{cursor:grab}
@@ -670,7 +699,6 @@ button.pcard:hover{border-color:var(--primary-line);box-shadow:0 2px 8px rgba(20
 .lc-zoom{position:absolute;left:12px;bottom:12px;display:flex;flex-direction:column;gap:4px;z-index:2}
 .lc-zoom button{width:32px;height:32px;border-radius:8px;background:var(--surface);border:1px solid var(--line);color:var(--sub);font-size:14px}
 .lc-zoom button:hover{color:var(--primary);border-color:var(--primary-line)}
-.lc-zoom span{font-size:11px;color:var(--muted);text-align:center}
 
 .lpanel{background:var(--surface);border:1px solid var(--line);border-radius:12px;overflow:auto;padding-bottom:8px}
 .lp-h{padding:16px 16px 4px;font-weight:600;display:flex;gap:8px;align-items:baseline}
@@ -864,7 +892,6 @@ input.pv-in:focus{border-color:var(--pv-accent)}
   <div class="demo-bar"><span>왈라 제작 흐름 데모</span><button data-act="reset">처음부터 다시</button></div>
   <div class="screen" id="screen"></div>
 </div></div>
-<button class="log-btn" id="logBtn" data-act="toggleLog">기록 보기</button>
 <div id="pkModal"></div>
 <div id="pvLayer"></div>
 <div id="logLayer"></div>
@@ -899,6 +926,13 @@ const T = {
   time:    {label:'시간',         ic:'◷', kind:'fake',   fake:'오전  --:--', alias:'시간'},
   pay:     {label:'간편결제',     ic:'₩', kind:'fake',   fake:'결제 금액 0원 · 간편결제로 결제하기', alias:'간편결제 결제 토스 페이먼츠'},
 };
+// country codes for the phone question; each comes with a local number example
+const CC = [['+82', '한국', '010-0000-0000'], ['+1', '미국·캐나다', '(000) 000-0000'], ['+81', '일본', '090-0000-0000'], ['+86', '중국', '131-0000-0000'],
+  ['+852', '홍콩', '0000-0000'], ['+886', '대만', '0912-345-678'], ['+84', '베트남', '091-234-5678'], ['+66', '태국', '081-234-5678'],
+  ['+65', '싱가포르', '8123-4567'], ['+63', '필리핀', '0917-123-4567'], ['+62', '인도네시아', '0812-345-678'], ['+91', '인도', '98765-43210'],
+  ['+44', '영국', '07400-123456'], ['+49', '독일', '01512-3456789'], ['+33', '프랑스', '06-12-34-56-78'], ['+61', '호주', '0412-345-678']];
+const ccOf = code => CC.find(c => c[0] === code) || CC[0];
+const ccOpts = sel => CC.map(([c, n]) => `<option value="${c}" ${c === sel ? 'selected' : ''}>${n} ${c}</option>`).join('');
 const VAR = {
   choice: {label:'형태', opts:[['text','텍스트'],['photo','사진']]},
   text:   {label:'길이', opts:[['short','단답형'],['long','장문형']]},
@@ -910,7 +944,8 @@ const VAR_TEXT = {
   capture:{photo:'카메라로 사진을 찍어 올려요', video:'카메라로 영상을 찍어 올려요'},
   upload: {photo:'사진을 끌어오거나 클릭해서 업로드', file:'파일을 끌어오거나 클릭해서 업로드'},
 };
-const GROUPS = [['선택', ['choice','dropdown','scale','rank','table']], ['입력', ['text','number','url']], ['파일', ['capture','upload']],
+// 촬영 (capture) is no longer offered; its definitions stay so questions saved earlier still show
+const GROUPS = [['선택', ['choice','dropdown','scale','rank','table']], ['입력', ['text','number','url']], ['파일', ['upload']],
   ['연락처·개인정보', ['privacy','phone','email','address']], ['날짜·시간', ['date','time']], ['결제', ['pay']]];
 const FREQ = [
   ['choice', '객관식', '보기 중에서 고르게 해요. 여러 개 고르기, 사진 보기도 돼요'],
@@ -944,7 +979,6 @@ function log(ev, detail = ''){
   ampTrack(ev, {detail, elapsed_sec: Math.round(el * 10) / 10, demo: 'full_flow'});
   if (CUR && (view === 'editor' || view === 'logic' || view === 'brand')) CUR.updated = now;
   saveSoon();
-  $('#logBtn').textContent = `기록 보기 (${LOG.length})`;
   if (logOpen) renderLog();
 }
 
@@ -1119,7 +1153,7 @@ function toggleSettings(force){
   const old = $('.set-pop');
   if (old || force === false){ old?.remove(); return; }
   $('.eh-right').insertAdjacentHTML('beforeend', `<div class="set-pop" role="menu"><div class="sp-h">설정</div>
-    <button data-act="setLog">${ICN.chart}테스트 기록 (UT)</button><button data-act="setDelAll">${ICN.trash}데모 설문 모두 지우기</button>
+    <button data-act="setDelAll">${ICN.trash}데모 설문 모두 지우기</button>
     <div class="sp-h">단축키</div><p class="sp-keys"><kbd>Ctrl</kbd>+<kbd>Z</kbd> 되돌리기 · <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>Z</kbd> 다시 하기<br><kbd>Ctrl</kbd>+<kbd>S</kbd> 임시 저장 · <kbd>Esc</kbd> 창 닫기</p></div>`);
   log('settings_opened');
 }
@@ -1161,7 +1195,7 @@ function doPublish(){
       <p>‘${esc(CUR.name)}’ 설문을 게시했어요. 제작에 ${dur} 걸렸어요.</p>
       <div class="pd-link"><code>${pubLink()}</code><button class="btn" data-act="copyLink">${ICN.copy}복사</button></div>
       <small>데모라서 실제로 공개되지는 않아요.</small></div>
-    <div class="pubm-f"><button class="btn" data-act="pubLog">테스트 기록 보기</button><button class="btn primary" data-act="pubClose">완료</button></div></div></div>`;
+    <div class="pubm-f"><button class="btn primary" data-act="pubClose">완료</button></div></div></div>`;
 }
 
 // moving between the three steps: back to an earlier one is screen_back; leaving a step forward completes it
@@ -1197,13 +1231,15 @@ function editor(){
 }
 
 // the list shows the start of the question itself; '제목 없음' only while it is blank
-const fieldLabel = q => `${gno(q)}. ${esc(q.title.trim() || '제목 없음')}`;
+// the list shows its own field name once one is typed there; until then it follows the card's question
+const fieldName = q => (q.fname || '').trim() || q.title.trim();
+const fieldLabel = q => `${gno(q)}. ${esc(fieldName(q) || '제목 없음')}`;
 // a group made on the logic screen shows as a header row with its members boxed underneath
 const grpHead = (q, i) => q.group && q.group !== E.qs[i - 1]?.group ? `<li class="f-ghead">${esc(gName(q.group))}</li>` : '';
 function renderFields(){
   $('#fields').innerHTML = `<div class="f-head">설문 필드</div>
-    <ul class="f-list">${E.qs.length ? E.qs.map((q, i) => `${grpHead(q, i)}<li draggable="true" data-fq="${q.id}" class="${q.group ? 'in-grp' : ''} ${q.group && q.group !== E.qs[i + 1]?.group ? 'grp-end' : ''}"><div class="f-item ${q.id === E.cur ? 'active' : ''}" data-field="${q.id}" role="button" tabindex="0" title="끌어서 순서 바꾸기 · 두 번 눌러 질문 고치기">
-      <span class="f-drag" aria-hidden="true">⋮⋮</span>${ico(q.type)}<span class="t ${q.title.trim() ? '' : 'empty'}">${fieldLabel(q)}</span>${q.required ? '<span class="req">필수</span>' : ''}</div></li>`).join('')
+    <ul class="f-list">${E.qs.length ? E.qs.map((q, i) => `${grpHead(q, i)}<li draggable="true" data-fq="${q.id}" class="${q.group ? 'in-grp' : ''} ${q.group && q.group !== E.qs[i + 1]?.group ? 'grp-end' : ''}"><div class="f-item ${q.id === E.cur ? 'active' : ''}" data-field="${q.id}" role="button" tabindex="0" title="끌어서 순서 바꾸기 · 두 번 눌러 필드 이름 고치기">
+      <span class="f-drag" aria-hidden="true">⋮⋮</span>${ico(q.type)}<span class="t ${fieldName(q) ? '' : 'empty'}">${fieldLabel(q)}</span>${q.required ? '<span class="req">필수</span>' : ''}</div></li>`).join('')
       : '<li class="f-empty">아직 문항이 없어요</li>'}</ul>
     ${E.qs.length ? `<div class="f-end"><div class="f-head">엔딩 필드<button class="f-add" data-act="addEnding" title="엔딩 추가">+</button></div>
       <ul class="f-elist">${endings().map((en, k) => `<li><button class="f-item" data-act="goEnding" data-k="${k}">
@@ -1282,17 +1318,18 @@ function cardHTML(q, i){
         <div class="bulk-row"><span>줄마다 선택지 하나로 추가돼요</span><div><button class="btn" data-act="bulkToggle">취소</button>
         <button class="btn primary" data-act="bulkAdd">추가하기</button></div></div></div>` : ''}`;
   } else if (t.kind === 'input'){
-    const ph = VAR_TEXT[q.type]?.[q.variant] ?? t.ph;
+    const ph = q.type === 'phone' ? ccOf(q.cc)[2] : VAR_TEXT[q.type]?.[q.variant] ?? t.ph;
     const tag = q.variant === 'long' ? `<textarea class="ph tall" data-f="placeholder" placeholder="${esc(ph)}">${esc(q.placeholder)}</textarea>`
       : `<input class="ph" data-f="placeholder" value="${esc(q.placeholder)}" placeholder="${esc(ph)}">`;
-    body = tag;
+    body = q.type === 'phone' ? `<div class="cc-row"><select class="ph cc" data-cc aria-label="국가 번호">${ccOpts(q.cc || '+82')}</select>${tag}</div>` : tag;
   } else if (t.kind === 'scale'){
     body = `<div class="scale"><small>전혀 아니다</small>${[1,2,3,4,5].map(n => `<span>${n}</span>`).join('')}<small>매우 그렇다</small></div>`;
   } else if (t.kind === 'table'){
     body = `<div class="grid-fake"><span></span><span>그렇다</span><span>보통</span><span>아니다</span>
       <span>강의 내용</span><span>○</span><span>○</span><span>○</span><span>진행 방식</span><span>○</span><span>○</span><span>○</span></div>`;
   } else {
-    body = `<div class="fake ${t.kind === 'drop' ? 'drop' : ''}">${VAR_TEXT[q.type]?.[q.variant] ?? t.fake}</div>`;
+    const span = q.type === 'date' && q.dMin && q.dMax ? `<small style="margin-left:auto">${dotDate(q.dMin)} ~ ${dotDate(q.dMax)}</small>` : '';
+    body = `<div class="fake ${t.kind === 'drop' ? 'drop' : ''}">${VAR_TEXT[q.type]?.[q.variant] ?? t.fake}${span}</div>`;
   }
   const vtag = VAR[q.type] ? `<span class="vlabel">${varLabel(q.type, q.variant)}</span>` : '';
   return `<div class="qwrap ${q.id === E.cur ? 'active' : ''}" id="card-${q.id}" data-q="${q.id}">
@@ -1327,9 +1364,30 @@ function condHTML(q){
     }
   }
   if (t.kind === 'input') h += `<div class="rp-l">안내 문구 (플레이스홀더)</div>
-    <input class="rp-in" data-f="placeholder" value="${esc(q.placeholder)}" placeholder="${esc(VAR_TEXT[q.type]?.[q.variant] ?? t.ph)}">`;
+    <input class="rp-in" data-f="placeholder" value="${esc(q.placeholder)}" placeholder="${esc(q.type === 'phone' ? ccOf(q.cc)[2] : VAR_TEXT[q.type]?.[q.variant] ?? t.ph)}">`;
   if (t.fmt) h += rtog(q, 'formatCheck', q.type === 'email' ? '이메일 형식만 받기' : '전화번호 형식만 받기');
+  if (q.type === 'date') h += calHTML(q);
   return h;
+}
+const ymd = d => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+const dotDate = s => s.replaceAll('-', '. ');
+// the month on show in the panel calendar, per question; opens on the start of the range, or this month
+let calView = null, calFor = null;
+const calBase = q => (calFor === q.id && calView) || (q.dMin ? new Date(q.dMin + 'T00:00') : new Date());
+function calHTML(q){
+  const base = calBase(q);
+  const y = base.getFullYear(), m = base.getMonth(), first = new Date(y, m, 1), today = ymd(new Date());
+  const days = Array.from({length: 42}, (_, i) => new Date(y, m, 1 - first.getDay() + i));
+  const lo = q.dMin, hi = q.dMax || q.dMin;
+  const range = !lo ? '응답자가 아무 날짜나 고를 수 있어요'
+    : q.dMax ? `${dotDate(lo)} ~ ${dotDate(q.dMax)} 사이만 고를 수 있어요` : `${dotDate(lo)} 부터 · 끝 날짜를 눌러주세요`;
+  return `<div class="rp-l">응답 가능 기간</div><div class="rcal">
+    <div class="rcal-h"><button data-act="calMove" data-v="-1" title="이전 달">‹</button><b>${y}년 ${m + 1}월</b><button data-act="calMove" data-v="1" title="다음 달">›</button></div>
+    <div class="rcal-g">${['일','월','화','수','목','금','토'].map((w, i) => `<span class="wd ${i ? '' : 'sun'}">${w}</span>`).join('')}
+      ${days.map(d => { const k = ymd(d);
+        const cls = [d.getMonth() !== m && 'out', k === today && 'today', lo && k >= lo && k <= hi && 'in', (k === lo || k === q.dMax) && 'edge'].filter(Boolean).join(' ');
+        return `<button class="${cls}" data-act="calPick" data-d="${k}">${d.getDate()}</button>`; }).join('')}</div>
+    <div class="rcal-f"><span>${range}</span>${lo ? '<button data-act="calClear">지우기</button>' : ''}</div></div>`;
 }
 
 /* the same picker shows in the right panel for the first question and in a popup for 'add question' */
@@ -1339,17 +1397,15 @@ function renderPanel(){
   if (E.pk.open && E.pk.mode === 'first'){ p.innerHTML = pickerHTML(); return; }
   const q = curQ();
   if (!q){ p.innerHTML = `<div class="rp-empty">문항을 고르면 설정이 여기에 표시돼요.</div>`; return; }
-  // every type, with detailed forms spelled out (e.g. 주관식 · 단답형)
-  const typeOpts = GROUPS.flatMap(([, ks]) => ks).map(k => VAR[k]
-    ? VAR[k].opts.map(([v, l]) => `<option value="${k}|${v}" ${q.type === k && q.variant === v ? 'selected' : ''}>${T[k].label} · ${l}</option>`).join('')
-    : `<option value="${k}" ${q.type === k ? 'selected' : ''}>${T[k].label}</option>`).join('');
   const ENT = '<span class="ent">Enterprise</span>';
+  // 객관식, 주관식, 촬영, 업로드 each come in two forms, chosen at the top of the panel
+  const v = VAR[q.type];
+  const varHTML = v ? `<div class="rp-h first">설문 설정</div>
+    <div class="var-opts">${v.opts.map(([val, l]) => `<button class="var-opt ${q.variant === val ? 'on' : ''}" data-act="variant" data-v="${val}" aria-pressed="${q.variant === val}">
+      <span class="var-mini">${VMINI[val]}</span>${l}</button>`).join('')}</div>` : '';
   p.innerHTML = `<div class="rp-box"><button class="rp-x" data-act="rpClose" title="닫기">×</button>
-    <div class="rp-l first">문항 제목</div>
-    <input class="rp-in" data-f="title" value="${esc(q.title)}" placeholder="제목 없음">
-    <div class="rp-l">문항 유형</div>
-    <select class="rp-in rp-sel" data-ptype>${typeOpts}</select>
-    <div class="rp-h">응답 조건</div>
+    ${varHTML}
+    <div class="rp-h ${v ? '' : 'first'}">응답 조건</div>
     ${condHTML(q)}
     <div class="rp-div"></div>
     <div class="rp-h">보안</div>
@@ -1663,6 +1719,7 @@ function renderCanvas(){
   };
   const stage = $('#lStage');
   stage.style.width = W * z + 'px'; stage.style.height = H * z + 'px';
+  panStage();
   // a dashed '페이지 나눔' line in the gap under a question that ends a page
   const breaks = L.qs.slice(0, -1).filter(q => q.pageBreak && P[q.id]).map(q => { const p = P[q.id];
     return `<div class="lpb" style="left:${p.cx - p.w / 2 + ox}px;top:${p.y + oy + NH + VG / 2}px;width:${p.w}px"><span>페이지 나눔</span></div>`; }).join('');
@@ -1681,11 +1738,13 @@ function renderCanvas(){
       <button data-act="lGroup" class="pri">그룹 만들기 (${picked.length})</button></div>`;
   })() : '';
   stage.innerHTML = `<div class="linner" style="width:${W}px;height:${H}px;transform:scale(${z})">${gboxes}${svg}${breaks}${selBar}${Object.entries(P).map(([id, p]) => node(id, p)).join('')}</div>`;
-  $('#lZoomPct').textContent = Math.round(z * 100) + '%';
   const pb = $('#lBreakBtn'), sq = L.sel && lq(L.sel); if (pb) pb.textContent = sq?.pageBreak ? '페이지 나눔 지우기' : '페이지 나누기';
   const gb = $('#lGroupBtn'); if (gb){ gb.textContent = `그룹 만들기${L.checked.size ? ` (${L.checked.size})` : ''}`; gb.classList.toggle('primary', L.checked.size >= 2); }
   $('#lEmpty').hidden = L.qs.length > 0;
 }
+
+// the canvas moves freely: panning shifts the whole stage, with no scroll limits
+function panStage(){ const st = $('#lStage'); if (st) st.style.transform = `translate(${L.px || 0}px,${L.py || 0}px)`; }
 
 function renderStruct(){
   let html = '', prevG = null;
@@ -1838,8 +1897,7 @@ function logicScreen(src){
           <div class="lscroll"><div class="lstage" id="lStage"></div></div>
           <div class="lc-empty" id="lEmpty" hidden><b>아직 문항이 없어요</b><span>문항 편집에서 만든 문항이 여기에 그대로 나타나요.</span>
             <div><button class="btn" data-act="toEdit">문항 편집으로 가기</button><button class="btn primary" data-act="lSample">예시 문항 7개 불러오기</button></div></div>
-          <div class="lc-zoom"><button data-act="lZoom" data-v="in" title="확대">+</button><button data-act="lZoom" data-v="out" title="축소">−</button>
-            <button data-act="lZoom" data-v="fit" title="화면에 맞추기">⤢</button><span id="lZoomPct"></span></div>
+          <div class="lc-zoom"><button data-act="lZoom" data-v="fit" title="화면에 맞추기">⤢</button></div>
         </div>
         <div class="cfoot"><button class="btn primary" data-act="toBranding" data-src="다음 단계 버튼">다음 단계: 브랜딩 →</button></div>
       </section>
@@ -1950,6 +2008,7 @@ function logicClick(e){
       const v = a.dataset.v, sc = document.querySelector('.lscroll');
       L.zoom = v === 'in' ? Math.min(1.5, L.zoom + .1) : v === 'out' ? Math.max(.4, L.zoom - .1)
         : Math.max(.4, Math.min(1, (sc.clientWidth - 48) / L.W, (sc.clientHeight - 116) / L.H));
+      if (v === 'fit') L.px = L.py = 0;
       renderCanvas(); return true;
     }
     case 'lBreak': { const x = lq(a.dataset.id); x.pageBreak = true; log('page_break_added', `${lno(x)} 다음에서 나눔`); renderStruct(); return true; }
@@ -1995,10 +2054,18 @@ function logicClick(e){
   return false;
 }
 
-/* canvas: drag nodes, drag empty space to pan, wheel to zoom around the cursor */
+/* canvas: drag nodes, drag empty space (or hold the right or wheel button anywhere) to pan, wheel to zoom around the cursor */
 let nodeDrag = null, pan = null, suppressClick = false;
+const PAN_BTN = {0: '빈 곳 드래그', 1: '휠 버튼', 2: '오른쪽 버튼'};
 document.addEventListener('pointerdown', e => {
-  if (view !== 'logic' || e.button !== 0) return;
+  if (view !== 'logic') return;
+  if (e.button === 1 || e.button === 2){
+    const sc = e.target.closest('.lscroll'); if (!sc) return;
+    e.preventDefault();   // no autoscroll icon on the wheel button
+    pan = {sc, x: e.clientX, y: e.clientY, l: L.px || 0, t: L.py || 0, btn: e.button, moved: false}; sc.classList.add('panning');
+    return;
+  }
+  if (e.button !== 0) return;
   const n = e.target.closest('.lstage .ln');
   if (n){
     const id = n.dataset.lnode || n.dataset.lid, p = L.lastP[id];
@@ -2007,7 +2074,7 @@ document.addEventListener('pointerdown', e => {
     return;
   }
   const sc = e.target.closest('.lscroll');
-  if (sc && !e.target.closest('button')){ pan = {sc, x: e.clientX, y: e.clientY, l: sc.scrollLeft, t: sc.scrollTop}; sc.classList.add('panning'); }
+  if (sc && !e.target.closest('button')){ pan = {sc, x: e.clientX, y: e.clientY, l: L.px || 0, t: L.py || 0, btn: 0, moved: false}; sc.classList.add('panning'); }
 });
 document.addEventListener('pointermove', e => {
   if (nodeDrag){
@@ -2018,7 +2085,11 @@ document.addEventListener('pointermove', e => {
     renderCanvas();
     return;
   }
-  if (pan){ pan.sc.scrollLeft = pan.l - (e.clientX - pan.x); pan.sc.scrollTop = pan.t - (e.clientY - pan.y); }
+  if (pan){
+    const dx = e.clientX - pan.x, dy = e.clientY - pan.y;
+    if (!pan.moved && Math.hypot(dx, dy) < 4) return;
+    pan.moved = true; L.px = pan.l + dx; L.py = pan.t + dy; panStage();
+  }
 });
 document.addEventListener('pointerup', () => {
   if (nodeDrag){
@@ -2031,12 +2102,17 @@ document.addEventListener('pointerup', () => {
       log('logic_node_moved', d.id === 'start' ? '시작' : END[d.id] ? END[d.id].label : `${lno(lq(d.id))} ${short(lq(d.id).title)}`);
       // the canvas origin may shift once the drag ends; scroll by the same amount so nothing jumps
       renderCanvas();
-      const sc = document.querySelector('.lscroll');
-      sc.scrollLeft += (L.ox - before.ox) * L.zoom; sc.scrollTop += (L.oy - before.oy) * L.zoom;
+      L.px = (L.px || 0) - (L.ox - before.ox) * L.zoom; L.py = (L.py || 0) - (L.oy - before.oy) * L.zoom; panStage();
     }
   }
-  if (pan){ pan.sc.classList.remove('panning'); pan = null; }
+  if (pan){
+    pan.sc.classList.remove('panning');
+    if (pan.moved) log('logic_canvas_panned', PAN_BTN[pan.btn]);
+    pan = null;
+  }
 });
+document.addEventListener('contextmenu', e => { if (view === 'logic' && e.target.closest('.lscroll')) e.preventDefault(); });
+document.addEventListener('auxclick', e => { if (view === 'logic' && e.button === 1 && e.target.closest('.lscroll')) e.preventDefault(); });
 document.addEventListener('wheel', e => {
   if (view !== 'logic') return;
   const sc = e.target.closest?.('.lscroll'); if (!sc) return;
@@ -2047,7 +2123,7 @@ document.addEventListener('wheel', e => {
   if (nz === z) return;
   L.zoom = nz; renderCanvas();
   const r2 = stage.getBoundingClientRect();
-  sc.scrollLeft += r2.left + px * nz - e.clientX; sc.scrollTop += r2.top + py * nz - e.clientY;
+  L.px = (L.px || 0) - (r2.left + px * nz - e.clientX); L.py = (L.py || 0) - (r2.top + py * nz - e.clientY); panStage();
 }, {passive: false});
 
 /* editor field list: drag to reorder questions */
@@ -2096,8 +2172,8 @@ document.addEventListener('dblclick', e => {
   const item = e.target.closest('.f-item'); if (!item || item.querySelector('.f-edit')) return;
   const q = E.qs.find(x => x.id === item.dataset.field); if (!q) return;
   const inp = document.createElement('input');
-  inp.className = 'f-edit'; inp.value = q.title; inp.placeholder = '질문을 입력하세요';
-  inp.dataset.fedit = q.id; inp.dataset.orig = q.title; inp.setAttribute('aria-label', '질문 고치기');
+  inp.className = 'f-edit'; inp.value = fieldName(q); inp.placeholder = '필드 이름';
+  inp.dataset.fedit = q.id; inp.dataset.orig = inp.value; inp.setAttribute('aria-label', '필드 이름 고치기');
   item.querySelector('.t').replaceWith(inp);
   item.closest('li').draggable = false;   // so dragging inside the field selects text instead of moving the row
   inp.focus(); inp.select();
@@ -2106,10 +2182,10 @@ document.addEventListener('focusout', e => { if (e.target.dataset?.fedit) commit
 function commitFEdit(el){
   if (!el.isConnected || !E) return;
   const q = E.qs.find(x => x.id === el.dataset.fedit);
-  if (q && el.value !== q.title){
-    q.title = el.value;
-    log('question_typed', `${qn(q)} · 질문: "${el.value}" (목록에서)`);
-    const ci = document.querySelector(`#card-${q.id} .qtitle`); if (ci) ci.value = q.title;
+  // renaming here changes only the list; clearing it goes back to following the question
+  if (q && el.value !== el.dataset.orig){
+    q.fname = el.value.trim();
+    log('field_renamed', `${qn(q)} · 필드 이름: "${q.fname}"${q.fname ? '' : ' (질문 따라가기)'}`);
   }
   renderFields();
 }
@@ -2361,12 +2437,15 @@ function pvQ(q, tSize, b){
     ctl = `<div class="pvr-table"><span></span>${cols.map(c => `<span>${c}</span>`).join('')}${rows.map(r => `<span class="rh">${r}</span>${cols.map(c =>
       `<button class="${(a || {})[r] === c ? 'on' : ''}" data-pv="cell" data-q="${q.id}" data-row="${r}" data-v="${c}" aria-label="${r} ${c}"></button>`).join('')}`).join('')}</div>`;
   } else if (t.kind === 'input'){
-    const ph = esc(q.placeholder || VAR_TEXT[q.type]?.[q.variant] || t.ph || '');
+    const pcc = PV.cc?.[q.id] || q.cc || '+82';
+    const ph = esc(q.placeholder || (q.type === 'phone' ? ccOf(pcc)[2] : VAR_TEXT[q.type]?.[q.variant] || t.ph) || '');
     ctl = q.type === 'text' && q.variant === 'long'
       ? `<textarea class="pvr-in" data-pv-in="${q.id}" placeholder="${ph}">${esc(a || '')}</textarea>`
-      : `<input class="pvr-in" data-pv-in="${q.id}" value="${esc(a || '')}" placeholder="${ph}" ${q.type === 'number' ? 'inputmode="numeric"' : ''}>`;
+      : `<input class="pvr-in" data-pv-in="${q.id}" value="${esc(a || '')}" placeholder="${ph}" ${q.type === 'number' || q.type === 'phone' ? 'inputmode="numeric"' : ''}>`;
+    if (q.type === 'phone') ctl = `<div class="pvr-cc"><select class="pvr-in" data-pv-cc="${q.id}" aria-label="국가 번호">${ccOpts(pcc)}</select>${ctl}</div>`;
   } else if (q.type === 'date' || q.type === 'time'){
-    ctl = `<input class="pvr-in" type="${q.type}" data-pv-in="${q.id}" value="${esc(a || '')}">`;
+    const lim = q.type === 'date' && q.dMin && q.dMax ? ` min="${q.dMin}" max="${q.dMax}"` : '';
+    ctl = `<input class="pvr-in" type="${q.type}" data-pv-in="${q.id}" value="${esc(a || '')}"${lim}>`;
   } else if (q.type === 'capture' || q.type === 'upload'){
     const acc = q.variant === 'video' ? 'video/*' : q.variant === 'file' ? '' : 'image/*';
     ctl = `<label class="pvr-file">${a ? `✓ ${esc(a)}` : esc(VAR_TEXT[q.type]?.[q.variant] || t.fake)}<input type="file" hidden data-pv-file="${q.id}" ${acc ? `accept="${acc}"` : ''}></label>`;
@@ -2421,7 +2500,11 @@ function pvCheck(q){
     if (q.selMode === 'min' && n < k) return `${k}개 이상 골라주세요 (지금 ${n}개)`;
   }
   if (q.formatCheck && q.type === 'email' && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(a)) return '이메일 형식으로 입력해주세요 (예: name@email.com)';
-  if (q.formatCheck && q.type === 'phone' && !/^0\d{1,2}-?\d{3,4}-?\d{4}$/.test(String(a).replace(/\s/g, ''))) return '전화번호 형식으로 입력해주세요 (예: 010-1234-5678)';
+  if (q.formatCheck && q.type === 'phone'){
+    const cc = ccOf(PV?.cc?.[q.id] || q.cc || '+82'), num = String(a).replace(/\s/g, ''), digits = num.replace(/\D/g, '').length;
+    const ok = cc[0] === '+82' ? /^0\d{1,2}-?\d{3,4}-?\d{4}$/.test(num) : /^[\d()-]+$/.test(num) && digits >= 6 && digits <= 15;
+    if (!ok) return `전화번호 형식으로 입력해주세요 (예: ${cc[2]})`;
+  }
   return null;
 }
 
@@ -2486,6 +2569,7 @@ function pvNext(){
   pvl.addEventListener('change', e => {
     const el = e.target; if (!PV) return;
     if (el.dataset.pvIn){ PV.ans[el.dataset.pvIn] = el.value; return; }
+    if (el.dataset.pvCc){ (PV.cc ||= {})[el.dataset.pvCc] = el.value; delete PV.err[el.dataset.pvCc]; renderPreviewLayer(); return; }
     const id = el.dataset.pvChk || el.dataset.pvFile; if (!id) return;
     if (el.dataset.pvChk) PV.ans[id] = el.checked ? '동의' : undefined;
     else if (el.files?.[0]) PV.ans[id] = el.files[0].name;
@@ -2625,7 +2709,7 @@ document.addEventListener('input', e => {
   if (el.dataset.f !== 'opt') [`#card-${q.id} [data-f="${el.dataset.f}"]`, `#rpanel [data-f="${el.dataset.f}"]`].forEach(s => {
     const o = document.querySelector(s); if (o && o !== el && (s[1] === 'c' || E.cur === q.id)) o.value = el.value;
   });
-  if (el.dataset.f === 'title'){
+  if (el.dataset.f === 'title' && !(q.fname || '').trim()){
     const s = document.querySelector(`.f-item[data-field="${q.id}"] .t`);
     if (s){ s.textContent = `${gno(q)}. ${el.value.trim() || '제목 없음'}`; s.classList.toggle('empty', !el.value.trim()); }
   }
@@ -2641,6 +2725,12 @@ document.addEventListener('change', e => {
     const [to, v] = el.value.split('|'), q = curQ();
     if (q) setType(q, to, v ?? null);
     return;
+  }
+  if (el.dataset && 'cc' in el.dataset && E){
+    const q = qOf(el); if (!q) return;
+    const from = q.cc || '+82'; q.cc = el.value;
+    log('phone_country_set', `${qn(q)} · ${ccOf(from)[1]} ${from} → ${ccOf(q.cc)[1]} ${q.cc}`);
+    renderCards(); renderPanel(); return;
   }
   if (el.dataset?.sdesc){ log('survey_header_typed', `${el.dataset.sdesc === 'stitle' ? '제목' : '설명'}: "${el.value}"`); return; }
   if (el.dataset?.end){ log('ending_typed', `엔딩 ${+el.closest('[data-en]').dataset.en + 1} ${el.dataset.end === 'title' ? '제목' : '문구'}: "${el.value}"`); return; }
@@ -2756,7 +2846,6 @@ document.addEventListener('click', e => {
     case 'pubClose': if (a.classList.contains('confirm-bg') && e.target !== a) break; $('#confirmLayer').innerHTML = ''; break;
     case 'pubGo': doPublish(); break;
     case 'pubPreview': $('#confirmLayer').innerHTML = ''; openPreview('게시 전 점검'); break;
-    case 'pubLog': $('#confirmLayer').innerHTML = ''; logOpen = true; renderLog(); break;
     case 'pubFix': {
       $('#confirmLayer').innerHTML = ''; log('publish_fix', `${qn(E.qs.find(x => x.id === a.dataset.q))} 제목 고치기`);
       if (view !== 'editor') editor();
@@ -2771,7 +2860,6 @@ document.addEventListener('click', e => {
     case 'redo': undoRedo(true); break;
     case 'manualSave': manualSave('상단 저장 버튼'); break;
     case 'settings': toggleSettings(); break;
-    case 'setLog': toggleSettings(false); logOpen = true; renderLog(); log('test_log_opened', '설정 메뉴'); break;
     case 'setDelAll':
       toggleSettings(false);
       askConfirm(`데모 설문 ${PROJECTS.length}개를 모두 지울까요?<br>지우면 되돌릴 수 없고 홈으로 돌아가요.`, '모두 지우기', () => {
@@ -2881,6 +2969,20 @@ document.addEventListener('click', e => {
       break;
     }
     case 'sel': setCond(q, 'selMode', a.dataset.v); break;
+    case 'calMove': {
+      const b = calBase(q); calFor = q.id;
+      calView = new Date(b.getFullYear(), b.getMonth() + +a.dataset.v, 1); renderPanel(); break;
+    }
+    case 'calPick': {
+      const d = a.dataset.d; calFor = q.id;
+      calView = new Date(+d.slice(0, 4), +d.slice(5, 7) - 1, 1);   // a greyed day from the next or last month turns the page there
+      // first click starts a range, the second ends it (in either order); a click after that starts over
+      if (!q.dMin || q.dMax){ q.dMin = d; q.dMax = null; }
+      else { [q.dMin, q.dMax] = d < q.dMin ? [d, q.dMin] : [q.dMin, d];
+        log('date_range_set', `${qn(q)} · ${dotDate(q.dMin)} ~ ${dotDate(q.dMax)}`); }
+      renderCards(); renderPanel(); break;
+    }
+    case 'calClear': q.dMin = q.dMax = null; log('date_range_cleared', qn(q)); renderCards(); renderPanel(); break;
     case 'inc': setCond(q, 'selCount', q.selCount + 1); break;
     case 'dec': setCond(q, 'selCount', q.selCount - 1); break;
     case 'dup': {
@@ -2942,6 +3044,7 @@ function loadSaved(){
 }
 
 loadSaved();
-// the clock and the first screen start once the participant code is in
-askParticipant(home);
+// the dashboard shows right away, with the participant code dialog on top; home logs nothing, so the clock still starts at the first action
+home();
+askParticipant();
 </script>
