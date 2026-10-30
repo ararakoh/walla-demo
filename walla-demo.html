@@ -1,4 +1,8 @@
 <title>왈라 문항 편집 데모</title>
+<script>
+// design version: raise to v2, v3 … whenever the design changes; sent with every Amplitude event as "version"
+const DEMO_VERSION = 'v1';
+</script>
 <!-- Amplitude SDK files loaded directly: the key-specific loader script starts Amplitude itself, with autocapture on, whenever init has not run yet -->
 <script src="https://cdn.amplitude.com/libs/analytics-browser-2.42.4-min.js.gz" integrity="sha384-lKBFu+lrE+l3rHaNqttqd3e3ga1kwCKyeO1JiVVq2NlrrkHTdt8SobN3bqqLSKSw" crossorigin="anonymous"></script>
 <script src="https://cdn.amplitude.com/libs/plugin-session-replay-browser-1.32.1-min.js.gz" integrity="sha384-hWmXGSUzyw8M7w4rJJlIFGzPeQ65AgJf1YvcH6h4TZPbl20L+aSsZmLLdaPw+J7m" crossorigin="anonymous"></script>
@@ -16,9 +20,9 @@
 .pid-chip button{height:24px;padding:0 10px;border:0;border-radius:12px;background:#eef1f5;color:#4a525d;font:inherit;font-size:12px;cursor:pointer}
 </style>
 <script>
-/* Amplitude: every event in 기록 보기 is sent with the same name and fields, under the participant code as user ID.
+/* Amplitude: every logged event is sent with the same name and fields, under the participant code as user ID.
    Events logged before the code is entered wait in a queue and keep their original time.
-   Amplitude only starts once a real code is in; the code TEST keeps everything in 기록 보기 and sends nothing. */
+   Amplitude only starts once a real code is in; the code TEST sends nothing. */
 const AMP_KEY = 'a9ca0dffe57eca0d030f2c407f2ed92f';
 const AMP_TEST = 'TEST';
 let ampPid = null, ampLastReal = null, ampReady = false;
@@ -43,6 +47,7 @@ function ampStart(){
 }
 function ampTrack(ev, props){
   if (!window.amplitude || ampPid === AMP_TEST) return;
+  props = {...props, version: DEMO_VERSION};
   if (!ampPid){ ampQueue.push([ev, props, Date.now()]); return; }
   window.amplitude.track(ev, props);
 }
@@ -246,8 +251,6 @@ input,textarea,select{font:inherit;color:inherit}
 .panel-empty{padding:30px 18px;color:var(--muted);font-size:13px;text-align:center}
 
 /* log */
-.log-btn{position:fixed;right:20px;bottom:20px;z-index:30;height:40px;padding:0 16px;border-radius:20px;background:#1f2329;color:#fff;font-size:13px;box-shadow:0 4px 14px rgba(0,0,0,.18)}
-.log-btn:hover{background:#000}
 .log{position:fixed;right:20px;bottom:72px;z-index:50;width:640px;max-height:70vh;background:#fff;border:1px solid var(--line);border-radius:14px;box-shadow:0 12px 40px rgba(0,0,0,.18);display:flex;flex-direction:column}
 .log-h{display:flex;align-items:center;gap:8px;padding:12px 14px;border-bottom:1px solid var(--line2)}
 .log-h b{flex:1}
@@ -283,7 +286,6 @@ input,textarea,select{font:inherit;color:inherit}
 </div></div>
 <div class="pk-layer" id="pkLayer"></div>
 <div id="confirmLayer"></div>
-<button class="log-btn" id="logBtn" data-act="toggleLog">기록 보기</button>
 <div id="logLayer"></div>
 <div class="toast" id="toast"></div>
 
@@ -334,7 +336,6 @@ function log(ev, detail = ''){
   const el = t0 ? (now - t0) / 1000 : 0;
   LOG.push({ev, detail, t: now, el});
   ampTrack(ev, {detail, elapsed_sec: Math.round(el * 10) / 10, demo: 'editor'});
-  $('#logBtn').textContent = `기록 보기 (${LOG.length})`;
   if (logOpen) renderLog();
 }
 const pad = (n, l = 2) => String(n).padStart(l, '0');
