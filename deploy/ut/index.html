@@ -206,6 +206,69 @@ button.pcard:hover{border-color:var(--primary-line);box-shadow:0 2px 8px rgba(20
 .choice .tt{display:block;font-size:14px;font-weight:700;margin-bottom:6px}
 .choice .ds{display:block;color:var(--sub);font-size:11.5px;line-height:1.55}
 .import-link{margin-top:30px;display:flex;align-items:center;gap:6px;font-size:12px;color:var(--sub)}
+/* onboarding: the editor layout, empty, with the ways to start under the blank card */
+.ob-grid{flex:1;min-height:0;display:grid;grid-template-columns:240px minmax(0,1fr);gap:14px;padding:14px}
+.ob-fields{pointer-events:none;user-select:none}
+.ob-plus{width:28px;height:28px;border-radius:7px;background:var(--chip);color:var(--muted);display:flex;align-items:center;justify-content:center;font-size:17px;font-weight:400}
+.ob-item{display:flex;align-items:center;gap:10px;margin:4px 8px;padding:7px 8px;font-size:13px;color:var(--muted)}
+.ob-item i{font-style:italic}
+.ob-no{font-size:11.5px;font-weight:700;color:#e8893a;background:#fff3e6;border-radius:6px;padding:2px 7px}
+.ob-end{margin-top:auto;border-top:1px solid var(--line);min-height:34%}
+.ob-center{min-width:0;overflow:auto;display:flex;flex-direction:column;gap:18px;padding-bottom:24px}
+.ob-card{flex:none;background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:16px 20px 44px;display:flex;flex-direction:column;align-items:center;pointer-events:none;user-select:none}
+.ob-chips{align-self:flex-start;display:flex;gap:8px}
+.ob-chip{height:32px;padding:0 12px;border-radius:8px;background:var(--chip);color:var(--sub);font-size:13px;font-weight:600;display:inline-flex;align-items:center}
+.ob-q{margin-top:56px;font-size:20px;font-weight:600;color:#c4c9d1}
+.ob-start .choice.on{border-color:var(--primary);box-shadow:0 0 0 3px var(--primary-soft)}
+.ob-submit{margin-top:54px;width:min(100%,640px);height:46px;border-radius:10px;background:var(--primary);color:#fff;font-weight:700;display:flex;align-items:center;justify-content:center}
+.ob-start{flex:none;margin:0 auto;width:min(100%,760px);background:#f1f3f6;border-radius:16px;padding:34px 20px 26px;display:flex;flex-direction:column;align-items:center}
+.ob-start h2{margin:0 0 6px;font-size:22px}
+.ob-start .lead{margin:0 0 24px;color:var(--sub);font-size:13px}
+.ob-start .import-link{margin-top:22px}
+/* template gallery and AI draft: a panel in the center column, in place of the start view */
+.ob-home{display:flex;flex-direction:column;gap:18px}
+.ob-home[hidden],.ob-pane[hidden]{display:none}
+.ob-pane{flex:none;background:var(--surface);border:1px solid var(--line);border-radius:16px;display:flex;flex-direction:column}
+.ob-pane-h{display:flex;align-items:center;gap:14px;padding:14px 18px;border-bottom:1px solid var(--line)}
+.ob-pane-h b{font-size:16px}
+.ob-back{height:32px;padding:0 12px;border-radius:8px;background:var(--chip);color:var(--sub);font-size:13px}
+.ob-back:hover{background:#e6e9ee;color:var(--text)}
+.ob-pane-f{display:flex;justify-content:flex-end;gap:8px;padding:14px 0 0;margin-top:16px;border-top:1px solid var(--line)}
+.ob-pane-f .btn{height:40px;padding:0 16px;border-radius:10px}
+.tpl-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px;padding:18px 20px 22px}
+.tpl{display:flex;flex-direction:column;align-items:flex-start;gap:6px;text-align:left;padding:16px;border:1px solid var(--line);border-radius:14px;background:var(--surface);transition:border-color .12s,box-shadow .12s}
+.tpl:hover{border-color:var(--primary-line);box-shadow:0 6px 20px rgba(20,30,50,.08)}
+.tpl b{font-size:15px}
+.tpl-ds{font-size:12.5px;color:var(--sub)}
+.tpl ul{list-style:none;margin:6px 0 4px;padding:0;width:100%;display:flex;flex-direction:column;gap:5px}
+.tpl li{display:flex;align-items:center;gap:7px;font-size:12.5px;color:var(--text);min-width:0}
+.tpl li span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tpl li .ico{width:20px;height:20px;font-size:10.5px}
+.tpl li.more{color:var(--muted);padding-left:27px}
+.tpl-n{margin-top:auto;font-size:12.5px;font-weight:600;color:var(--primary)}
+.ai-wrap{width:min(100%,640px);margin:0 auto;padding:22px 20px 22px}
+.ai-l{display:block;font-size:14px;font-weight:700;margin-bottom:10px}
+#aiPrompt{width:100%;border:1px solid var(--line);border-radius:12px;padding:12px 14px;font:inherit;font-size:14px;resize:none;outline:none;line-height:1.5}
+#aiPrompt:focus{border-color:var(--primary-line);box-shadow:0 0 0 3px var(--primary-soft)}
+.ai-ex{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.ai-ex button{height:30px;padding:0 11px;border-radius:15px;background:var(--chip);color:var(--sub);font-size:12.5px}
+.ai-ex button:hover{background:#f1ecff;color:#7c5cf0}
+.ai-load{display:flex;flex-direction:column;align-items:center;gap:14px;padding:46px 0 40px;color:var(--sub);font-size:14px}
+.ai-dots{display:flex;gap:6px}
+.ai-dots i{width:9px;height:9px;border-radius:50%;background:#7c5cf0;animation:aiDot 1s ease-in-out infinite}
+.ai-dots i:nth-child(2){animation-delay:.15s}
+.ai-dots i:nth-child(3){animation-delay:.3s}
+@keyframes aiDot{0%,100%{opacity:.25;transform:translateY(0)}50%{opacity:1;transform:translateY(-4px)}}
+@media (prefers-reduced-motion:reduce){.ai-dots i{animation:none;opacity:.7}}
+.ai-res-h{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:10px}
+.ai-res-h b{font-size:16px}
+.ai-res-h span{font-size:12.5px;color:var(--muted)}
+.ai-res ol{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
+.ai-res li{display:flex;align-items:center;gap:9px;padding:9px 12px;border:1px solid var(--line2);border-radius:10px;font-size:13.5px;min-width:0}
+.ai-res li span{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ai-res li .ico{flex:none;width:22px;height:22px}
+.ai-res li em{flex:none;font-style:normal;font-size:12px;color:var(--muted)}
+.ai-note{margin:10px 0 0;font-size:12.5px;color:var(--muted)}
 .import-link svg{width:13px;height:13px}
 .import-link button{color:var(--text);font-weight:600;text-decoration:underline;text-underline-offset:3px;padding:0}
 .import-link button:hover{color:var(--primary)}
@@ -1187,25 +1250,129 @@ const pubBtn = () => CUR?.status === 'published'
 const head = last => `<header class="flow-head"><div class="logo">ꝏ</div>
   <nav class="crumb"><span>워크스페이스</span>›<button data-act="home" data-src="경로: 모의 설문">모의 설문</button>${last ? `›<b>${esc(CUR?.name || last)}</b>` : ''}</nav></header>`;
 
+// a new project opens on the editor's own layout, still empty: the field panels on the left, a blank survey card,
+// and under it the three ways to start. The panels and card only show what is coming; the choices below are live.
 function formatScreen(){
   endTest('다른 화면으로 이동해 종료');
   view = 'format';
+  const IC = {
+    blank: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/><path d="M12 11v6M9 14h6"/></svg>',
+    template: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><rect x="4" y="4" width="7" height="7" rx="1.5"/><rect x="13" y="4" width="7" height="7" rx="1.5"/><rect x="4" y="13" width="7" height="7" rx="1.5"/><rect x="13" y="13" width="7" height="7" rx="1.5"/></svg>',
+    ai: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M11 4l1.6 4.4L17 10l-4.4 1.6L11 16l-1.6-4.4L5 10l4.4-1.6z"/><path d="M18 15l.7 1.8 1.8.7-1.8.7L18 20l-.7-1.8-1.8-.7 1.8-.7z"/></svg>'};
   $('#screen').innerHTML = `<div class="flow">${head('새 프로젝트')}
-    <div class="flow-body center">
-      <h2>어떤 방식으로 설문을 만들까요?</h2>
-      <p class="lead">시작 방법을 고르면 바로 문항 편집으로 넘어가요.</p>
-      <div class="choices">
-        <button class="choice blank" data-format="blank"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/><path d="M12 11v6M9 14h6"/></svg></span>
-          <span><span class="tt">새로 만들기</span><span class="ds">빈 설문에서 문항을 하나씩 직접 만들어요</span></span></button>
-        <button class="choice template" data-format="template"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><rect x="4" y="4" width="7" height="7" rx="1.5"/><rect x="13" y="4" width="7" height="7" rx="1.5"/><rect x="4" y="13" width="7" height="7" rx="1.5"/><rect x="13" y="13" width="7" height="7" rx="1.5"/></svg></span>
-          <span><span class="tt">템플릿 사용하기</span><span class="ds">목적에 맞는 설문 양식을 골라 바로 수정해요</span></span></button>
-        <button class="choice ai" data-format="ai"><span class="ic"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M11 4l1.6 4.4L17 10l-4.4 1.6L11 16l-1.6-4.4L5 10l4.4-1.6z"/><path d="M18 15l.7 1.8 1.8.7-1.8.7L18 20l-.7-1.8-1.8-.7 1.8-.7z"/></svg></span>
-          <span><span class="tt">AI로 설문 만들기</span><span class="ds">만들고 싶은 설문을 설명하면 AI가 초안을 만들어요</span></span></button>
-      </div>
-      <div class="import-link"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></svg><span>다른 서비스에서 만든 폼이 있다면</span><button data-format="import">외부 폼 가져오기</button></div>
+    <div class="ob-grid">
+      <aside class="fields ob-fields" aria-hidden="true">
+        <div class="f-head">설문 필드<span class="ob-plus">+</span></div>
+        <div class="ob-item"><span class="ob-no">☰ 1</span><i>제목 없음</i></div>
+        <div class="ob-end"><div class="f-head">엔딩 필드<span class="ob-plus">+</span></div></div>
+      </aside>
+      <section class="ob-center">
+        <div class="ob-pane" id="obPane" hidden></div>
+        <div class="ob-home" id="obHome">
+        <div class="ob-card" aria-hidden="true">
+          <div class="ob-q">질문을 입력하세요…</div>
+          <div class="ob-submit">응답 제출</div>
+        </div>
+        </div>
+        <div class="ob-start">
+          <h2>어떤 방식으로 설문을 만들까요?</h2>
+          <p class="lead">시작 방법을 고르면 바로 문항 편집으로 넘어가요.</p>
+          <div class="choices">
+            <button class="choice blank" data-format="blank"><span class="ic">${IC.blank}</span>
+              <span><span class="tt">새로 만들기</span><span class="ds">빈 설문에서 문항을 하나씩 직접 만들어요</span></span></button>
+            <button class="choice template" data-format="template"><span class="ic">${IC.template}</span>
+              <span><span class="tt">템플릿 사용하기</span><span class="ds">목적에 맞는 설문 양식을 골라 바로 수정해요</span></span></button>
+            <button class="choice ai" data-format="ai"><span class="ic">${IC.ai}</span>
+              <span><span class="tt">AI로 설문 만들기</span><span class="ds">만들고 싶은 설문을 설명하면 AI가 초안을 만들어요</span></span></button>
+          </div>
+          <div class="import-link"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></svg><span>다른 서비스에서 만든 폼이 있다면</span><button data-format="import">외부 폼 가져오기</button></div>
+        </div>
+      </section>
     </div></div>`;
   log('format_view');
 }
+
+/* ready-made surveys: [type, question, options, extra settings] */
+const TEMPLATES = [
+  {key: 'csat', name: '고객 만족도 조사', desc: '서비스를 써 본 고객의 만족도와 개선점을 들어요', qs: [
+    ['scale', '전반적으로 서비스에 얼마나 만족하시나요?', [], {required: true}],
+    ['choice', '가장 자주 쓰는 기능은 무엇인가요?', ['검색', '추천', '결제', '고객센터']],
+    ['text', '개선되었으면 하는 점을 자유롭게 적어주세요', [], {variant: 'long'}],
+    ['choice', '다른 사람에게 추천할 의향이 있나요?', ['예', '아니오']]]},
+  {key: 'event', name: '행사 참가 신청', desc: '참가자 정보와 참석 세션을 받아요', qs: [
+    ['privacy', '개인정보 수집·이용에 동의해주세요', [], {required: true}],
+    ['text', '이름', [], {required: true}],
+    ['phone', '연락처', [], {required: true}],
+    ['email', '이메일', []],
+    ['choice', '참석할 세션을 골라주세요', ['오전 세션', '오후 세션', '종일 참석']]]},
+  // read lazily: SAMPLE is defined further down the file
+  {key: 'webinar', name: 'AI 웨비나 사후 설문', desc: '직무별 관심사와 상담 희망 여부를 파악해요', get qs(){ return SAMPLE.map(([t, q, o]) => [t, q, o]); }},
+  {key: 'nps', name: '추천 지수 (NPS)', desc: '추천 의향 점수와 그 이유를 짧게 물어요', qs: [
+    ['scale', '이 서비스를 친구나 동료에게 추천할 가능성은 얼마나 되나요?', [], {scaleMax: 10, scaleLo: '전혀 아니다', scaleHi: '매우 그렇다', required: true}],
+    ['text', '그렇게 점수를 준 이유는 무엇인가요?', [], {variant: 'long'}]]},
+];
+// a new editor filled with the given questions, opened on the first one
+function startWith(list, stitle){
+  newEditor();
+  list.forEach(([type, title, opts, extra]) => { const q = newQ(type); q.title = title; if (opts?.length) q.options = [...opts]; Object.assign(q, extra || {}); E.qs.push(q); });
+  E.pk.open = false; E.cur = E.qs[0]?.id ?? null; E.stitle = stitle;
+  editor();
+}
+function showPane(title, html, id){
+  const p = $('#obPane'), h = $('#obHome'); if (!p || !h) return;
+  p.innerHTML = `<div class="ob-pane-h"><button class="ob-back" data-act="obClose">← 시작 방법 다시 고르기</button><b>${title}</b></div>${html}`;
+  p.id = 'obPane'; p.dataset.pane = id; p.hidden = false; h.hidden = true;
+  document.querySelectorAll('.ob-start .choice').forEach(c => c.classList.toggle('on', c.dataset.format === (id === 'tpl' ? 'template' : id)));
+  p.closest('.ob-center').scrollTop = 0;
+}
+function obBack(){
+  const p = $('#obPane'), h = $('#obHome'); if (!p || !h) return;
+  log('format_back', p.dataset.pane === 'ai' ? 'AI로 설문 만들기에서' : '템플릿 고르기에서');
+  p.hidden = true; p.innerHTML = ''; h.hidden = false;
+  document.querySelectorAll('.ob-start .choice.on').forEach(c => c.classList.remove('on'));
+}
+function openTemplates(){
+  showPane('템플릿 고르기', `<div class="tpl-grid">${TEMPLATES.map((t, i) => `<button class="tpl" data-act="tplUse" data-t="${i}"><b>${t.name}</b><span class="tpl-ds">${t.desc}</span>
+      <ul>${t.qs.slice(0, 3).map(q => `<li>${ico(q[0])}<span>${esc(q[1])}</span></li>`).join('')}${t.qs.length > 3 ? `<li class="more">외 ${t.qs.length - 3}개</li>` : ''}</ul>
+      <span class="tpl-n">문항 ${t.qs.length}개 · 이 템플릿 쓰기 →</span></button>`).join('')}</div>`, 'tpl');
+  log('template_gallery_view');
+}
+
+// AI draft (a demo stand-in): reads the request for a few topics and drafts questions around it
+let AI = {prompt: '', state: 'input', draft: null};
+const eul = w => { const c = w.charCodeAt(w.length - 1); return c >= 0xAC00 && c <= 0xD7A3 && (c - 0xAC00) % 28 ? '을' : '를'; };
+function aiDraft(p){
+  const has = (...w) => w.some(x => p.includes(x)), tpl = k => TEMPLATES.find(t => t.key === k);
+  if (has('만족', '후기', '피드백', '리뷰', '개선')) return {title: '고객 만족도 조사', qs: tpl('csat').qs};
+  if (has('행사', '신청', '참가', '접수', '등록')) return {title: '행사 참가 신청', qs: tpl('event').qs};
+  if (has('추천', 'NPS', 'nps')) return {title: '추천 지수 (NPS)', qs: tpl('nps').qs};
+  if (has('웨비나', '세미나', '직무', 'AI 서비스')) return {title: 'AI 웨비나 사후 설문', qs: tpl('webinar').qs};
+  const topic = p.replace(/[.!?]+$/, '').replace(/\s*(에 대한|에 관한|관련)?\s*(설문|조사|폼)(지)?(를|을)?\s*(만들어\s*(줘|주세요)|만들고\s*싶어요?|해\s*줘)?$/, '').trim().slice(0, 24) || '서비스';
+  return {title: `${topic} 설문`, qs: [
+    ['choice', `${topic}${eul(topic)} 이용해 보신 적이 있나요?`, ['예', '아니오'], {required: true}],
+    ['scale', `${topic}에 얼마나 만족하시나요?`, []],
+    ['choice', '가장 중요하게 생각하는 점은 무엇인가요?', ['가격', '품질', '편의성', '기타']],
+    ['text', `${topic}에 대해 하고 싶은 말을 자유롭게 적어주세요`, [], {variant: 'long'}],
+    ['email', '결과를 받아볼 이메일 (선택)', []]]};
+}
+const AI_EX = ['신제품 출시 후 고객 반응을 알아보는 설문', '사내 워크숍 참가 신청 폼', '온라인 강의 수강 후기 설문'];
+function renderAI(){
+  const st = AI.state, d = AI.draft;
+  const body = st === 'loading' ? `<div class="ai-load"><span class="ai-dots"><i></i><i></i><i></i></span>AI가 초안을 만들고 있어요</div>`
+    : st === 'done' ? `<div class="ai-res"><div class="ai-res-h"><b>${esc(d.title)}</b><span>문항 ${d.qs.length}개</span></div>
+        <ol>${d.qs.map(q => `<li>${ico(q[0])}<span>${esc(q[1])}</span><em>${T[q[0]].label}</em></li>`).join('')}</ol>
+        <p class="ai-note">초안이에요. 편집 화면에서 자유롭게 고칠 수 있어요.</p></div>`
+    : `<label class="ai-l" for="aiPrompt">어떤 설문을 만들고 싶나요?</label>
+        <textarea id="aiPrompt" rows="3" placeholder="예: 신제품 출시 후 고객 반응을 알아보는 설문">${esc(AI.prompt)}</textarea>
+        <div class="ai-ex">${AI_EX.map(x => `<button data-act="aiChip" data-v="${esc(x)}">${esc(x)}</button>`).join('')}</div>`;
+  const foot = st === 'loading' ? ''
+    : st === 'done' ? '<button class="btn" data-act="aiRetry">다시 쓰기</button><button class="btn primary" data-act="aiUse">이 초안으로 시작</button>'
+    : '<button class="btn" data-act="obClose">취소</button><button class="btn primary" data-act="aiMake">✦ 초안 만들기</button>';
+  showPane('✦ AI로 설문 만들기', `<div class="ai-wrap" id="aiBox"><div class="ai-b">${body}</div>${foot ? `<div class="ob-pane-f">${foot}</div>` : ''}</div>`, 'ai');
+  if (st === 'input') setTimeout(() => $('#aiPrompt')?.focus(), 0);
+}
+function openAI(){ AI = {prompt: '', state: 'input', draft: null}; renderAI(); log('ai_prompt_view'); }
+document.addEventListener('input', e => { if (e.target.id === 'aiPrompt') AI.prompt = e.target.value; });
 
 /* placeholder for steps that are not built yet */
 function soonScreen(title, pickedLabel, from){
@@ -3378,6 +3545,8 @@ document.addEventListener('click', e => {
     picked = f.dataset.format;
     log('format_selected', picked);
     if (picked === 'blank'){ newEditor(); editor(); log('type_opened', '첫 문항'); }
+    else if (picked === 'template') openTemplates();
+    else if (picked === 'ai') openAI();
     else soonScreen('다음 단계 (준비 중)', FORMATS[picked].label);
     return;
   }
@@ -3414,6 +3583,30 @@ document.addEventListener('click', e => {
     case 'publish':
       if (CUR.status === 'published') doPublish(); else openPublish();
       break;
+    case 'obClose':
+      if (AI.state === 'loading' && $('#aiBox')) break;   // let the draft finish
+      obBack(); break;
+    case 'tplUse': {
+      const t = TEMPLATES[+a.dataset.t];
+      startWith(t.qs, t.name); log('template_used', `${t.name} · 문항 ${t.qs.length}개`); break;
+    }
+    case 'aiChip': AI.prompt = a.dataset.v; renderAI(); log('ai_example_picked', a.dataset.v); break;
+    case 'aiMake': {
+      AI.prompt = ($('#aiPrompt')?.value ?? AI.prompt).trim();
+      if (!AI.prompt){ toast('만들고 싶은 설문을 한 줄로 적어주세요'); $('#aiPrompt')?.focus(); break; }
+      AI.state = 'loading'; renderAI(); log('ai_prompt_submitted', `"${AI.prompt}"`);
+      setTimeout(() => {
+        if (AI.state !== 'loading' || !$('#aiBox')) return;
+        AI.draft = aiDraft(AI.prompt); AI.state = 'done'; renderAI();
+        log('ai_draft_made', `${AI.draft.title} · 문항 ${AI.draft.qs.length}개`);
+      }, 1400);
+      break;
+    }
+    case 'aiRetry': AI.state = 'input'; renderAI(); log('ai_draft_retry'); break;
+    case 'aiUse': {
+      const d = AI.draft;
+      startWith(d.qs, d.title); log('ai_draft_used', `${d.title} · 문항 ${d.qs.length}개`); break;
+    }
     case 'pubClose': if (a.classList.contains('confirm-bg') && e.target !== a) break; $('#confirmLayer').innerHTML = ''; break;
     case 'pubGo': doPublish(); break;
     case 'pubPreview': $('#confirmLayer').innerHTML = ''; openPreview('게시 전 점검'); break;
