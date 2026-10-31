@@ -122,7 +122,7 @@
   let ampPid = null, ampLastReal = null, ampReady = false;
   const ampQueue = [];
   if (!window.amplitude) console.error('[amplitude] loader did not load — no events will be sent');
-  function ampStart() {
+  function ampStart(code) {
     if (ampReady || !window.amplitude) return;
     // replay stays on, but the text in every input field is masked. The project's replay settings are always fetched
     // (replay turns itself off without them); these selectors are added to the project's, so inputs stay masked either way.
@@ -130,9 +130,11 @@
       sampleRate: 1, serverZone: 'US',
       privacyConfig: { defaultMaskLevel: 'medium', maskSelector: ['input', 'textarea', 'select', '[contenteditable]'] }
     }));
-    window.amplitude.init(AMP_KEY, {
+    window.amplitude.init(AMP_KEY, code, {
       serverZone: 'US',
-      // only the events this demo logs: every autocapture type off, and project remote settings are not fetched to turn them back on
+      // Each new interview begins with its own session, even if a prior session is still in the cookie.
+      sessionId: Date.now(),
+      // Capture visits and sessions; keep the other automatic interactions disabled.
       autocapture: {
         attribution: true, pageViews: true, sessions: true, formInteractions: false, fileDownloads: false,
         elementInteractions: false, frustrationInteractions: false, pageUrlEnrichment: false, webVitals: false, networkTracking: false
@@ -155,10 +157,18 @@
       ampQueue.length = 0;
       if (ampReady) window.amplitude.setOptOut(true);   // stops events and replay for the rest of this test run
     } else if (window.amplitude) {
-      ampStart();
-      window.amplitude.setOptOut(false);
-      if (ampLastReal && ampLastReal !== code) window.amplitude.reset();   // a new participant starts a fresh device and session
-      window.amplitude.setUserId(code);
+      const alreadyInitialized = ampReady;
+      ampStart(code); // On the first visit, init receives the participant ID.
+      if (alreadyInitialized) {
+        if (ampLastReal && ampLastReal !== code) {
+          window.amplitude.reset(); // New device ID for the next participant.
+          window.amplitude.setUserId(code);
+          window.amplitude.setSessionId(Date.now()); // reset() alone keeps the previous session ID.
+        } else {
+          window.amplitude.setUserId(code);
+        }
+      }
+      window.amplitude.setOptOut(false); // Re-enable TEST opt-out only after identity is set.
       ampLastReal = code;
       ampQueue.splice(0).forEach(([ev, props, time]) => window.amplitude.track(ev, props, { time }));
     }
