@@ -826,7 +826,8 @@ button.pcard:hover{border-color:var(--primary-line);box-shadow:0 2px 8px rgba(20
 
 .lcenter{display:flex;flex-direction:column;min-height:0;min-width:0}
 .lcanvas{flex:1;min-height:0;position:relative;border:1px solid var(--line);border-radius:12px;background-color:var(--surface);background-image:radial-gradient(#d9dde4 1px,transparent 1px);background-size:16px 16px;overflow:hidden}
-.lscroll{position:absolute;inset:0;overflow:hidden;padding:56px 24px 60px;cursor:grab;touch-action:none}
+.lscroll{position:absolute;inset:0;overflow:hidden;padding:56px 24px 60px;cursor:default;touch-action:none}
+.lmarq{position:absolute;z-index:6;pointer-events:none;border:1px solid var(--primary);border-radius:4px;background:color-mix(in srgb, var(--primary) 10%, transparent)}
 .lscroll.panning{cursor:grabbing}
 .lstage{position:relative;margin:0 auto;user-select:none}
 .lstage .ln{cursor:grab}
@@ -2631,14 +2632,15 @@ function logicClick(e){
   return false;
 }
 
-/* canvas: drag nodes, drag empty space (or hold the right or wheel button anywhere) to pan, wheel to zoom around the cursor */
+/* canvas: drag nodes, drag empty space to box-select questions, hold the wheel or right button anywhere on the canvas to pan, wheel to zoom around the cursor */
 let nodeDrag = null, pan = null, suppressClick = false;
 const PAN_BTN = {0: '빈 곳 드래그', 1: '휠 버튼', 2: '오른쪽 버튼'};
 document.addEventListener('pointerdown', e => {
   if (view !== 'logic') return;
   if (e.button === 1 || e.button === 2){
-    const sc = e.target.closest('.lscroll'); if (!sc) return;
-    e.preventDefault();   // no autoscroll icon on the wheel button
+    const sc = e.target.closest('.lcanvas')?.querySelector('.lscroll'); if (!sc) return;
+    e.preventDefault();
+    try { e.target.setPointerCapture(e.pointerId); } catch {}   // keep the pan going even if the pointer leaves the canvas
     pan = {sc, x: e.clientX, y: e.clientY, l: L.px || 0, t: L.py || 0, btn: e.button, moved: false}; sc.classList.add('panning');
     return;
   }
@@ -2664,8 +2666,39 @@ document.addEventListener('pointerdown', e => {
     return;
   }
   const sc = e.target.closest('.lscroll');
-  if (sc && !e.target.closest('button,input')){ pan = {sc, x: e.clientX, y: e.clientY, l: L.px || 0, t: L.py || 0, btn: 0, moved: false}; sc.classList.add('panning'); }
+  if (!sc || e.target.closest('button,input')) return;
+  // a left drag on empty space draws a box that picks every question it touches; Shift keeps the ones already picked
+  if (L.test){ pan = {sc, x: e.clientX, y: e.clientY, l: L.px || 0, t: L.py || 0, btn: 0, moved: false}; sc.classList.add('panning'); return; }
+  marq = {sc, x: e.clientX, y: e.clientY, base: e.shiftKey ? new Set(L.checked) : new Set(), hits: [], el: null};
 });
+let marq = null;
+function marqMove(e){
+  const m = marq, r = m.sc.getBoundingClientRect();
+  if (!m.el){
+    if (Math.hypot(e.clientX - m.x, e.clientY - m.y) < 4) return;
+    m.el = document.createElement('div'); m.el.className = 'lmarq'; m.sc.appendChild(m.el);
+  }
+  const x0 = Math.min(m.x, e.clientX), x1 = Math.max(m.x, e.clientX), y0 = Math.min(m.y, e.clientY), y1 = Math.max(m.y, e.clientY);
+  Object.assign(m.el.style, {left: x0 - r.left + 'px', top: y0 - r.top + 'px', width: x1 - x0 + 'px', height: y1 - y0 + 'px'});
+  m.hits = [];
+  m.sc.querySelectorAll('.ln[data-lnode]').forEach(n => {
+    const b = n.getBoundingClientRect(), on = b.right > x0 && b.left < x1 && b.bottom > y0 && b.top < y1;
+    if (on) m.hits.push(n.dataset.lnode);
+    n.classList.toggle('checked', on || m.base.has(n.dataset.lnode));
+  });
+}
+function marqEnd(){
+  const m = marq; marq = null;
+  if (!m.el) return;   // no drag: the click that follows clears the picks as before
+  m.el.remove();
+  suppressClick = true; setTimeout(() => { suppressClick = false; }, 0);
+  const all = new Set([...m.base, ...m.hits]);
+  L.gsel = null; L.selRule = null;
+  if (all.size === 1){ L.sel = [...all][0]; L.checked.clear(); }
+  else { L.checked = all; L.sel = null; }
+  log('logic_drag_select', all.size ? `${all.size}개 · ${L.qs.filter(q => all.has(q.id)).map(q => lno(q)).join(', ')}` : '빈 곳 (선택 해제)');
+  afterLogic();
+}
 document.addEventListener('pointermove', e => {
   if (conn){
     if (!conn.moved && Math.hypot(e.clientX - conn.cx, e.clientY - conn.cy) < 4) return;
@@ -2688,6 +2721,7 @@ document.addEventListener('pointermove', e => {
     renderCanvas();
     return;
   }
+  if (marq){ marqMove(e); return; }
   if (pan){
     const dx = e.clientX - pan.x, dy = e.clientY - pan.y;
     if (!pan.moved && Math.hypot(dx, dy) < 4) return;
@@ -2695,6 +2729,7 @@ document.addEventListener('pointermove', e => {
   }
 });
 document.addEventListener('pointerup', () => {
+  if (marq){ marqEnd(); return; }
   if (conn){
     const d = conn; conn = null;
     if (d.moved){
@@ -2780,11 +2815,13 @@ document.addEventListener('pointerup', () => {
     pan = null;
   }
 });
-document.addEventListener('contextmenu', e => { if (view === 'logic' && e.target.closest('.lscroll')) e.preventDefault(); });
-document.addEventListener('auxclick', e => { if (view === 'logic' && e.button === 1 && e.target.closest('.lscroll')) e.preventDefault(); });
+document.addEventListener('contextmenu', e => { if (view === 'logic' && e.target.closest('.lcanvas')) e.preventDefault(); });
+// Chrome starts its autoscroll icon on mousedown, so the wheel button is stopped there too
+document.addEventListener('mousedown', e => { if (view === 'logic' && e.button === 1 && e.target.closest('.lcanvas')) e.preventDefault(); });
+document.addEventListener('auxclick', e => { if (view === 'logic' && e.button === 1 && e.target.closest('.lcanvas')) e.preventDefault(); });
 document.addEventListener('wheel', e => {
   if (view !== 'logic') return;
-  const sc = e.target.closest?.('.lscroll'); if (!sc) return;
+  const sc = e.target.closest?.('.lcanvas'); if (!sc) return;
   e.preventDefault();
   const stage = $('#lStage'), r = stage.getBoundingClientRect(), z = L.zoom;
   const px = (e.clientX - r.left) / z, py = (e.clientY - r.top) / z;
